@@ -112,7 +112,7 @@
 .tab-btn{
   flex:1;padding:12px 20px;border-radius:var(--radius-sm);border:none;cursor:pointer;
   background:none;color:var(--text-muted);font-weight:600;font-size:.95rem;font-family:var(--font-body);
-  transition:var(--transition);
+  transition:var(--transition);display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
 .tab-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 15px var(--primary-glow);}
 .tab-btn:hover:not(.active){color:var(--text);background:var(--surface-2);}
@@ -125,6 +125,7 @@
 .form-group{display:flex;flex-direction:column;gap:8px;}
 .form-group.full{grid-column:1/-1;}
 .form-label{font-size:.875rem;font-weight:600;color:var(--text-muted);}
+.social-link{width:36px;height:36px;border-radius:var(--radius-sm);background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:.9rem;transition:var(--transition);}
 .form-input,.form-select,.form-textarea{
   padding:12px 16px;border-radius:var(--radius-sm);
   background:var(--bg);border:1px solid var(--border);color:var(--text);
@@ -194,12 +195,72 @@
 .page-btn:hover{border-color:var(--primary);color:var(--primary-light);}
 .page-btn.active{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border-color:transparent;}
 
-/* RESPONSIVE COMPONENTS */
+/* ── RESPONSIVE COMPONENTS ──────────────────────────── */
+
 @media(max-width:768px){
+  /* About page grids */
   .mission-grid,.problem-solution-grid{grid-template-columns:1fr;}
+
+  /* Forms */
   .form-grid{grid-template-columns:1fr;}
+  .form-card{padding:24px 20px;}
+
+  /* Contact tabs: stacked */
   .contact-tabs{flex-direction:column;}
-  .form-card{padding:24px;}
-  .search-filter-bar{flex-direction:column;}
+
+  /* Search filter bar */
+  .search-filter-bar{flex-direction:column;padding:16px;}
   .search-input-wrap,.filter-select{width:100%;}
+  .filter-btn{width:100%;}
+
+  /* Job card: tighter on mobile */
+  .job-card{padding:18px;}
+  .job-footer{flex-wrap:wrap;gap:8px;}
+  .job-footer .btn{flex:1;justify-content:center;}
+  .salary{font-size:.9rem;}
+
+  /* Acc card thumb: shorter */
+  .acc-thumb{height:160px;}
+  .acc-body{padding:16px;}
+
+  /* Contact info grid: 2 cols */
+  .contact-info-grid{grid-template-columns:1fr 1fr;}
+
+  /* Team grid: 2 cols */
+  .team-grid{grid-template-columns:1fr 1fr;}
+
+  /* Pagination */
+  .pagination{gap:6px;}
+  .page-btn{width:36px;height:36px;font-size:.85rem;}
 }
+
+@media(max-width:480px){
+  /* Job card: ultra compact */
+  .job-card{padding:14px;gap:12px;}
+  .company-logo{width:44px;height:44px;font-size:.95rem;}
+  .job-title{font-size:1rem;}
+  .job-skills{gap:6px;}
+  .skill-badge{font-size:.73rem;padding:3px 8px;}
+
+  /* Acc card */
+  .acc-thumb{height:140px;}
+  .acc-body{padding:14px;}
+  .acc-name{font-size:.975rem;}
+  .acc-price{font-size:1.05rem;}
+  .acc-footer .btn{padding:6px 12px;font-size:.8rem;}
+
+  /* Contact info: single col */
+  .contact-info-grid{grid-template-columns:1fr;}
+
+  /* Team grid: single col */
+  .team-grid{grid-template-columns:1fr;}
+
+  /* Form card: minimal padding */
+  .form-card{padding:16px 14px;}
+  .form-submit{font-size:.95rem;padding:12px;}
+
+  /* No results */
+  .no-results{padding:48px 16px;}
+  .no-results .icon{font-size:2.4rem;}
+}
+

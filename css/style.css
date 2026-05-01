@@ -196,18 +196,139 @@ ul{list-style:none;}
 .footer-bottom{border-top:1px solid var(--border);padding-top:28px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
 .footer-bottom p{color:var(--text-subtle);font-size:.875rem;}
 
-/* RESPONSIVE */
-@media(max-width:1024px){.footer-grid{grid-template-columns:1fr 1fr;}}
+/* ── RESPONSIVE ────────────────────────────────────── */
+
+/* Tablet: 1024px */
+@media(max-width:1024px){
+  .footer-grid{grid-template-columns:1fr 1fr;}
+  .cards-grid{grid-template-columns:repeat(auto-fill,minmax(260px,1fr));}
+  .section{padding:72px 0;}
+  .section-sm{padding:48px 0;}
+}
+
+/* Mobile: 768px */
 @media(max-width:768px){
-  .nav-links{display:none;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:rgba(6,13,26,.97);backdrop-filter:blur(20px);padding:20px 24px 28px;border-bottom:1px solid var(--border);gap:4px;}
+  /* Navbar */
+  .nav-links{
+    display:none;flex-direction:column;
+    position:absolute;top:100%;left:0;right:0;
+    background:rgba(6,13,26,.97);backdrop-filter:blur(20px);
+    padding:20px 24px 28px;border-bottom:1px solid var(--border);gap:4px;
+  }
   .nav-links.open{display:flex;}
   .hamburger{display:flex;}
   .hide-mobile{display:none;}
-  .hero h1{font-size:2.2rem;}
-  .footer-grid{grid-template-columns:1fr;gap:32px;}
-  .hero-stats{gap:20px;}
-}
-@media(max-width:480px){
-  .hero-actions{flex-direction:column;}
+
+  /* Hero */
+  .hero{padding:90px 0 60px;min-height:auto;align-items:flex-start;}
+  .hero-content{max-width:100%;}
+  .hero h1{font-size:2rem;margin-bottom:16px;}
+  .hero p{font-size:.975rem;margin-bottom:28px;}
+  .hero-actions{flex-direction:column;gap:12px;margin-bottom:36px;}
+  .hero-actions .btn{width:100%;justify-content:center;}
+
+  /* Hero search bar: stack vertically */
+  .hero-search{
+    flex-direction:column;align-items:stretch;
+    padding:16px;gap:10px;max-width:100%;
+  }
+  .hero-search input{padding:12px 0;font-size:.95rem;}
+  .hero-search select{width:100%;padding:10px 12px;}
+  .hero-search .btn{width:100%;justify-content:center;padding:12px;}
+
+  /* Hero stats: 2-column grid */
+  .hero-stats{
+    display:grid;grid-template-columns:1fr 1fr;
+    gap:16px;margin-top:32px;
+  }
+  .hero-stat-num{font-size:1.6rem;}
+
+  /* Sections */
+  .section{padding:56px 0;}
+  .section-sm{padding:40px 0;}
+  .section-header{margin-bottom:36px;}
+  .section-header h2{font-size:1.7rem;}
+  .section-header p{font-size:.95rem;}
+
+  /* Cards: single column on mobile */
+  .cards-grid{grid-template-columns:1fr;}
+  .testimonials-grid{grid-template-columns:1fr;}
+  .steps-grid{grid-template-columns:1fr;}
+
+  /* Step cards: horizontal layout on mobile */
+  .step-card{
+    display:flex;flex-direction:row;align-items:flex-start;
+    gap:16px;text-align:left;padding:20px;
+  }
+  .step-icon{margin:0;flex-shrink:0;width:48px;height:48px;}
+  .step-num{font-size:2.5rem;top:12px;right:14px;}
+
+  /* CTA banner */
   .cta-banner{padding:40px 24px;}
+  .cta-banner h2{font-size:1.6rem;}
+  .cta-actions{flex-direction:column;gap:12px;}
+  .cta-actions .btn{width:100%;justify-content:center;}
+
+  /* Footer */
+  .footer-grid{grid-template-columns:1fr;gap:32px;}
+  .footer{padding:48px 0 24px;}
+  .footer-bottom{flex-direction:column;text-align:center;gap:8px;}
+
+  /* Partners */
+  .partners-strip{gap:12px;}
+  .partner-logo{padding:10px 16px;font-size:.875rem;}
+
+  /* Page hero (inner pages) */
+  .page-hero{padding:110px 0 56px;}
+  .page-hero h1{font-size:1.75rem;}
+  .page-hero p{font-size:.95rem;}
+
+  /* Mission grid (about page) */
+  .mission-grid,.problem-solution-grid{grid-template-columns:1fr;}
+  .mission-img img{height:240px;}
 }
+
+/* Small phones: 480px */
+@media(max-width:480px){
+  .container{padding:0 16px;}
+  .hero h1{font-size:1.75rem;}
+  .hero p{font-size:.9rem;}
+  .hero-stats{grid-template-columns:1fr 1fr;gap:12px;}
+  .hero-stat-num{font-size:1.4rem;}
+  .hero-badge{font-size:.8rem;padding:5px 12px;}
+
+  .btn-lg{padding:12px 24px;font-size:.975rem;}
+
+  /* Job & Acc cards: ensure full width */
+  .job-card,.acc-card{border-radius:var(--radius);}
+  .acc-thumb{height:160px;}
+
+  /* Form */
+  .form-card{padding:20px 16px;}
+  .form-grid{grid-template-columns:1fr;}
+
+  /* Contact tabs: stack */
+  .contact-tabs{flex-direction:column;}
+  .tab-btn{font-size:.875rem;padding:10px 14px;}
+
+  /* Search filter bar */
+  .search-filter-bar{padding:14px;gap:10px;}
+  .search-input-wrap,.filter-select{width:100%;}
+  .filter-btn{width:100%;}
+
+  /* Testimonial cards: tighter padding */
+  .testimonial-card{padding:20px 16px;}
+
+  /* Step cards mobile */
+  .step-card{padding:16px;}
+  .step-icon{width:40px;height:40px;}
+
+  /* Footer bottom: stack */
+  .footer-bottom p{font-size:.8rem;}
+  .footer-bottom{gap:6px;}
+
+  /* Partners: tighter */
+  .partners-strip{gap:8px;}
+  .partner-logo{padding:8px 12px;font-size:.8rem;}
+}
+

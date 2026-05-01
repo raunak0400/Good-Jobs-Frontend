@@ -1,5 +1,5 @@
 ﻿/* ====================================================
-   NE CONNECT — main.js
+   GoodJob — main.js
    ==================================================== */
 
 // ── Navbar scroll behaviour ──────────────────────────
@@ -213,7 +213,7 @@ function initJobsPage() {
       if (city     && j.city     !== city)     return false;
       if (industry && j.industry !== industry) return false;
       if (type     && j.type     !== type)     return false;
-      if (salary   && j.salaryMin < parseInt(salary)) return false;
+      if (salary   && j.salaryMin < parseInt(salary))  return false;
       if (search   && !j.title.toLowerCase().includes(search) && !j.company.toLowerCase().includes(search)) return false;
       return true;
     });
