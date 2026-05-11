@@ -1,16 +1,18 @@
-﻿/* ====================================================
-   GoodJob — main.js
-   ==================================================== */
+/* ============================================================
+   Good Jobs — main.js  (frontend ↔ backend wiring)
+   ============================================================ */
 
-// ── Navbar scroll behaviour ──────────────────────────
+// ── API Base URL ─────────────────────────────────────────────
+// Change this to your Render URL after deployment
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000/api'
+  : 'https://goodjobs-api.onrender.com/api';
+
+// ── Navbar scroll ────────────────────────────────────────────
 const navbar = document.getElementById('navbar');
-if (navbar) {
-  window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.scrollY > 40);
-  });
-}
+if (navbar) window.addEventListener('scroll', () => navbar.classList.toggle('scrolled', window.scrollY > 40));
 
-// ── Mobile hamburger menu ─────────────────────────────
+// ── Mobile hamburger ─────────────────────────────────────────
 const hamburger = document.getElementById('hamburger');
 const navLinks  = document.getElementById('navLinks');
 if (hamburger && navLinks) {
@@ -18,129 +20,79 @@ if (hamburger && navLinks) {
     hamburger.classList.toggle('open');
     navLinks.classList.toggle('open');
   });
-  navLinks.querySelectorAll('.nav-link').forEach(l => {
-    l.addEventListener('click', () => {
-      hamburger.classList.remove('open');
-      navLinks.classList.remove('open');
-    });
-  });
+  navLinks.querySelectorAll('.nav-link').forEach(l => l.addEventListener('click', () => {
+    hamburger.classList.remove('open');
+    navLinks.classList.remove('open');
+  }));
 }
 
-// ── Reveal on scroll (Intersection Observer) ─────────
-const revealEls = document.querySelectorAll('.reveal');
-const observer  = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); }
-  });
+// ── Reveal on scroll ─────────────────────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
 }, { threshold: 0.12 });
-revealEls.forEach(el => observer.observe(el));
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-// ── Animated counters ────────────────────────────────
+// ── Animated counters ─────────────────────────────────────────
 function animateCounter(el, target, suffix) {
   let start = 0;
-  const duration = 2000;
-  const step = (timestamp) => {
-    if (!start) start = timestamp;
-    const progress = Math.min((timestamp - start) / duration, 1);
-    const val = Math.floor(progress * target);
-    el.textContent = val + suffix;
-    if (progress < 1) requestAnimationFrame(step);
+  const step = ts => {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / 2000, 1);
+    el.textContent = Math.floor(p * target) + suffix;
+    if (p < 1) requestAnimationFrame(step);
     else el.textContent = target + suffix;
   };
   requestAnimationFrame(step);
 }
-const counterEls = document.querySelectorAll('[data-counter]');
-const counterObserver = new IntersectionObserver((entries) => {
+const counterObs = new IntersectionObserver(entries => {
   entries.forEach(e => {
     if (e.isIntersecting) {
-      const target = parseInt(e.target.dataset.counter);
-      const suffix = e.target.dataset.suffix || '';
-      animateCounter(e.target, target, suffix);
-      counterObserver.unobserve(e.target);
+      animateCounter(e.target, parseInt(e.target.dataset.counter), e.target.dataset.suffix || '');
+      counterObs.unobserve(e.target);
     }
   });
 }, { threshold: 0.5 });
-counterEls.forEach(el => counterObserver.observe(el));
+document.querySelectorAll('[data-counter]').forEach(el => counterObs.observe(el));
 
-// ── Contact page tabs ─────────────────────────────────
-const tabBtns   = document.querySelectorAll('.tab-btn');
-const tabPanels = document.querySelectorAll('.tab-panel');
-tabBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    const target = btn.dataset.tab;
-    tabBtns.forEach(b => b.classList.remove('active'));
-    tabPanels.forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    const panel = document.getElementById(target);
-    if (panel) panel.classList.add('active');
+// ── Toast notification ────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    document.body.appendChild(container);
+  }
+  const t = document.createElement('div');
+  t.className = `toast toast-${type}`;
+  t.innerHTML = `<span>${type === 'success' ? '✓' : '✕'}</span> ${msg}`;
+  container.appendChild(t);
+  setTimeout(() => t.classList.add('toast-show'), 10);
+  setTimeout(() => { t.classList.remove('toast-show'); setTimeout(() => t.remove(), 400); }, 4000);
+}
+
+// ── API fetch helper ──────────────────────────────────────────
+async function apiFetch(endpoint, options = {}) {
+  const res = await fetch(API_BASE + endpoint, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options,
   });
-});
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Request failed');
+  return data;
+}
 
-// ── Newsletter form ───────────────────────────────────
-document.querySelectorAll('.newsletter-form').forEach(form => {
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const btn = form.querySelector('button');
-    btn.textContent = '✓ Subscribed!';
-    btn.style.background = '#16a34a';
-    setTimeout(() => { btn.textContent = 'Subscribe'; btn.style.background = ''; }, 3000);
-  });
-});
+// ── SVG icons ─────────────────────────────────────────────────
+const SVG_PIN  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+const SVG_BAG  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`;
+const SVG_CLK  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const SVG_WALK = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"/><path d="M15 8H9l-2 6h3l-1 8h4l-1-8h3z"/></svg>`;
+const SVG_STAR = `<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
 
-// ── Job / Accommodation Data ──────────────────────────
-const JOBS = [
-  // ── Featured companies ───────────────────────────────────────────────────
-  { id:1,  title:'Social Media Executive',       company:'Gripit',                        city:'Ahmedabad', industry:'Marketing',       salaryMin:18000, salaryDisplay:'₹18,000 – ₹20,000/mo', type:'Full-time',  posted:'1 day ago',    logo:'GR', logoColor:'#E11D48', skills:['Instagram','Content Creation','Analytics'],        desc:'Manage Gripit\'s social channels and grow our digital presence.' },
-  { id:2,  title:'Sales & Marketing Executive',  company:'Flavaroma',                     city:'Ahmedabad', industry:'Marketing',       salaryMin:20000, salaryDisplay:'₹20,000 – ₹25,000/mo', type:'Full-time',  posted:'2 days ago',   logo:'FL', logoColor:'#F59E0B', skills:['B2B Sales','Digital Marketing','CRM'],              desc:'Drive sales growth for Flavaroma\'s expanding product line.' },
-  { id:3,  title:'Brand Designer / Creative Lead',company:'Anchoredge Branding Solutions', city:'Ahmedabad', industry:'Design',          salaryMin:25000, salaryDisplay:'₹25,000 – ₹30,000/mo', type:'Full-time',  posted:'3 days ago',   logo:'AB', logoColor:'#7C3AED', skills:['Branding','Figma','Illustrator','Strategy'],        desc:'Lead creative campaigns and brand identity work for top clients.' },
-  { id:4,  title:'Software Developer',           company:'Skynet Technologies',            city:'Ahmedabad', industry:'IT & Technology', salaryMin:20000, salaryDisplay:'₹20,000 – ₹25,000/mo', type:'Full-time',  posted:'1 day ago',    logo:'ST', logoColor:'#0D9488', skills:['React','Node.js','REST APIs'],                       desc:'Build and maintain scalable web platforms at Skynet.' },
-  { id:5,  title:'Full Stack Developer',         company:'GJ Tech Solutions Pvt Ltd',     city:'Ahmedabad', industry:'IT & Technology', salaryMin:18000, salaryDisplay:'₹18,000 – ₹23,000/mo', type:'Full-time',  posted:'4 days ago',   logo:'GJ', logoColor:'#059669', skills:['Vue.js','Laravel','MySQL','Docker'],                 desc:'Develop end-to-end web solutions for our enterprise clients.' },
-  { id:6,  title:'ERP Implementation Consultant',company:'VasyERP Solutions',             city:'Ahmedabad', industry:'IT & Technology', salaryMin:20000, salaryDisplay:'₹20,000 – ₹23,000/mo', type:'Full-time',  posted:'2 days ago',   logo:'VE', logoColor:'#2563EB', skills:['ERP','Business Analysis','SQL','Training'],         desc:'Implement and customise ERP systems for SMEs across Gujarat.' },
-  { id:7,  title:'Mobile App Developer',         company:'ASI Technology',                city:'Ahmedabad', industry:'IT & Technology', salaryMin:21000, salaryDisplay:'₹21,000 – ₹23,000/mo', type:'Full-time',  posted:'3 days ago',   logo:'AS', logoColor:'#0891B2', skills:['Flutter','Dart','Firebase','iOS/Android'],           desc:'Build cross-platform mobile apps for a growing tech firm.' },
-  { id:8,  title:'UI/UX Designer',               company:'Spacestem',                     city:'Ahmedabad', industry:'Design',          salaryMin:22000, salaryDisplay:'₹22,000 – ₹24,000/mo', type:'Full-time',  posted:'1 day ago',    logo:'SP', logoColor:'#6D28D9', skills:['Figma','Prototyping','User Research','Motion'],      desc:'Craft intuitive, visually stunning digital experiences.' },
-  { id:9,  title:'Product Manager',              company:'Cygnet.one',                    city:'Ahmedabad', industry:'IT & Technology', salaryMin:23000, salaryDisplay:'₹23,000 – ₹25,000/mo', type:'Full-time',  posted:'Today',        logo:'CY', logoColor:'#0F766E', skills:['Agile','Roadmapping','Jira','Stakeholder Mgmt'],    desc:'Own the product vision and roadmap for a cutting-edge SaaS platform.' },
-  { id:10, title:'Operations Manager',           company:'Speed Bird Service',            city:'Ahmedabad', industry:'Logistics',       salaryMin:25000, salaryDisplay:'₹25,000 – ₹30,000/mo', type:'Full-time',  posted:'Today',        logo:'SB', logoColor:'#D97706', skills:['Logistics','Team Leadership','Fleet Mgmt','Excel'], desc:'Oversee day-to-day courier and delivery operations across Gujarat.' },
-  // ── Additional listings ──────────────────────────────────────────────────
-  { id:11, title:'Content & SEO Writer',         company:'Anchoredge Branding Solutions', city:'Ahmedabad', industry:'Marketing',       salaryMin:18000, salaryDisplay:'₹18,000 – ₹22,000/mo', type:'Part-time',  posted:'5 days ago',   logo:'AB', logoColor:'#7C3AED', skills:['SEO','Copywriting','WordPress'],                      desc:'Write compelling blogs and web content for brand clients.' },
-  { id:12, title:'DevOps Engineer',              company:'Skynet Technologies',            city:'Ahmedabad', industry:'IT & Technology', salaryMin:22000, salaryDisplay:'₹22,000 – ₹28,000/mo', type:'Full-time',  posted:'3 days ago',   logo:'ST', logoColor:'#0D9488', skills:['AWS','Docker','CI/CD','Linux'],                       desc:'Build and maintain cloud infrastructure for our SaaS products.' },
-  { id:13, title:'Accounts Executive',           company:'Speed Bird Service',            city:'Ahmedabad',industry:'Finance',         salaryMin:18000, salaryDisplay:'₹18,000 – ₹22,000/mo', type:'Full-time',  posted:'1 week ago',   logo:'SB', logoColor:'#D97706', skills:['Tally','GST','Invoicing','MS Excel'],                desc:'Handle day-to-day accounts for our Dibrugarh branch.' },
-  { id:14, title:'QA / Test Engineer',           company:'VasyERP Solutions',             city:'Ahmedabad', industry:'IT & Technology', salaryMin:19000, salaryDisplay:'₹19,000 – ₹22,000/mo', type:'Full-time',  posted:'6 days ago',   logo:'VE', logoColor:'#2563EB', skills:['Selenium','Manual Testing','JIRA','Python'],         desc:'Ensure software quality through rigorous test planning and execution.' },
-  { id:15, title:'Graphic Designer',             company:'Gripit',                        city:'Ahmedabad', industry:'Design',          salaryMin:18000, salaryDisplay:'₹18,000 – ₹20,000/mo', type:'Full-time',  posted:'2 days ago',   logo:'GR', logoColor:'#E11D48', skills:['Adobe Suite','Canva','Motion Graphics'],              desc:'Create eye-catching visuals for Gripit\'s campaigns and products.' },
-];
-
-const ACCOMMODATION = [
-  // ── PG Rooms ─────────────────────────────────────────────────────────────
-  { id:1,  name:'NE Boys PG — Navrangpura',            area:'Navrangpura',      city:'Ahmedabad',  type:'PG',          gender:'Male',   price:4500,  amenities:['WiFi','Meals','Laundry','AC'],            rating:4.3, distance:'0.5 km from CG Road',        color:'linear-gradient(135deg,#0D9488,#0F766E)' },
-  { id:2,  name:'Comfort Girls PG — Satellite',      area:'Satellite',           city:'Ahmedabad',  type:'PG',          gender:'Female', price:5200,  amenities:['WiFi','Meals','Security','CCTV'],         rating:4.5, distance:'1 km from corporate offices',       color:'linear-gradient(135deg,#059669,#047857)' },
-  { id:3,  name:'Comfort Inn Girls PG',       area:'Bodakdev',    city:'Ahmedabad',  type:'PG',          gender:'Female', price:5500,  amenities:['WiFi','Meals','AC','Power Backup'],       rating:4.2, distance:'Near SG Highway office hub',            color:'linear-gradient(135deg,#DB2777,#BE185D)' },
-  { id:4,  name:'Urban Nest Co-living',       area:'Prahlad Nagar',             city:'Ahmedabad',  type:'PG',          gender:'Any',    price:6800,  amenities:['WiFi','AC','Gym','24/7 Water'],           rating:4.6, distance:'Near Prahlad Nagar offices',       color:'linear-gradient(135deg,#7C3AED,#6D28D9)' },
-  { id:5,  name:'Riverside Executive PG',     area:'Vastrapur',       city:'Ahmedabad',  type:'PG',          gender:'Male',   price:7200,  amenities:['WiFi','AC','Meals','Gym','Rooftop'],      rating:4.7, distance:'Near Vastrapur Lake',          color:'linear-gradient(135deg,#0891B2,#0E7490)' },
-  { id:6,  name:'Chandkheda Boys PG',       area:'Chandkheda',        city:'Ahmedabad', type:'PG',          gender:'Male',   price:4000,  amenities:['WiFi','Meals','Laundry'],                 rating:4.1, distance:'Near Chandkheda IT cluster',            color:'linear-gradient(135deg,#0D9488,#0369A1)' },
-  // ── Hostels ───────────────────────────────────────────────────────────────
-  { id:7,  name:'NE Student Hostel — Navrangpura',    area:'Navrangpura',           city:'Ahmedabad',  type:'Hostel',      gender:'Male',   price:3800,  amenities:['WiFi','Meals','Study Room'],              rating:4.0, distance:'0.3 km from Navrangpura metro',  color:'linear-gradient(135deg,#0369A1,#1D4ED8)' },
-  { id:8,  name:'Maninagar Girls Hostel',      area:'Maninagar',           city:'Ahmedabad',  type:'Hostel',      gender:'Female', price:4200,  amenities:['WiFi','Meals','CCTV','24/7 Security'],    rating:4.4, distance:'Near Maninagar Railway Station',           color:'linear-gradient(135deg,#9D174D,#BE185D)' },
-  { id:9,  name:'NE Co-ed Hostel — Chandkheda',          area:'Chandkheda',           city:'Ahmedabad',  type:'Hostel',      gender:'Any',    price:3500,  amenities:['WiFi','Meals','Study Hall','Library'],    rating:4.2, distance:'Near Chandkheda Metro Station',              color:'linear-gradient(135deg,#1D4ED8,#7C3AED)' },
-  // ── Apartments ────────────────────────────────────────────────────────────
-  { id:10, name:'1 BHK — Navrangpura',          area:'Navrangpura',          city:'Ahmedabad',  type:'Apartment',   gender:'Any',    price:9500,  amenities:['WiFi','Parking','24/7 Security','Water'], rating:4.4, distance:'Near IT Park, Navrangpura',         color:'linear-gradient(135deg,#D97706,#B45309)' },
-  { id:11, name:'2 BHK — CG Road',            area:'CG Road',            city:'Ahmedabad',  type:'Apartment',   gender:'Any',    price:14000, amenities:['WiFi','Parking','Lift','Power Backup'],   rating:4.6, distance:'2 min walk to CG Road',   color:'linear-gradient(135deg,#0F766E,#0891B2)' },
-  { id:12, name:'Studio Flat — Satellite',   area:'Satellite',         city:'Ahmedabad',  type:'Apartment',   gender:'Any',    price:8000,  amenities:['WiFi','Fully Furnished','Balcony'],       rating:4.3, distance:'Near Satellite commercial area',         color:'linear-gradient(135deg,#6D28D9,#C2410C)' },
-  { id:13, name:'2 BHK — Bodakdev',           area:'Bodakdev',           city:'Ahmedabad',  type:'Apartment',   gender:'Any',    price:12500, amenities:['WiFi','Parking','Modular Kitchen','Lift'], rating:4.5, distance:'10 min from SG Highway offices', color:'linear-gradient(135deg,#065F46,#0D9488)' },
-  { id:14, name:'1 BHK — SG Highway',         area:'SG Highway',         city:'Ahmedabad',  type:'Apartment',   gender:'Any',    price:10000, amenities:['WiFi','Parking','24/7 Water','Modular Kitchen'], rating:4.4, distance:'Central Ahmedabad, near metro',  color:'linear-gradient(135deg,#1E40AF,#0891B2)' },
-  { id:15, name:'3 BHK — Thaltej',            area:'Thaltej',            city:'Ahmedabad',  type:'Apartment',   gender:'Any',    price:18000, amenities:['WiFi','Parking','Gym','Pool','Security'], rating:4.8, distance:'Near Thaltej, SG Highway',    color:'linear-gradient(135deg,#7C2D12,#DC2626)' },
-  { id:16, name:'1 BHK — Maninagar',  area:'Maninagar',            city:'Ahmedabad', type:'Apartment',   gender:'Any',    price:8500,  amenities:['WiFi','Parking','24/7 Security'],         rating:4.2, distance:'Central Maninagar',              color:'linear-gradient(135deg,#0D9488,#059669)' },
-  { id:17, name:'Premium Studio — Prahlad Nagar',   area:'Prahlad Nagar',            city:'Ahmedabad',   type:'Apartment',   gender:'Any',    price:7000,  amenities:['WiFi','Furnished','Parking'],             rating:4.1, distance:'Near Prahlad Nagar offices',               color:'linear-gradient(135deg,#4338CA,#7C3AED)' },
-];
-
-// ── Render Job Cards ──────────────────────────────────
-const SVG_PIN   = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
-const SVG_BAG   = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`;
-const SVG_CLK   = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
-const SVG_WALK  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M13 4a1 1 0 1 0 2 0 1 1 0 0 0-2 0M5.5 8.5l3-1.5 2 4 3 2 1 5M10 11l1.5 3.5"/></svg>`;
-
+// ── Render job card ───────────────────────────────────────────
 function renderJobCard(job) {
   const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
   return `
-  <div class="job-card reveal" data-city="${job.city}" data-industry="${job.industry}" data-type="${job.type}" data-salary="${job.salaryMin}">
+  <div class="job-card reveal card-glow" data-id="${job.id}">
     <div class="job-card-header">
       <div class="company-logo" style="background:${job.logoColor}">${job.logo}</div>
       <div class="job-info">
@@ -149,7 +101,7 @@ function renderJobCard(job) {
       </div>
     </div>
     <div class="job-meta">
-      <span class="meta-tag">${SVG_PIN} ${job.city}</span>
+      <span class="meta-tag">${SVG_PIN} ${job.area || job.city}</span>
       <span class="meta-tag">${SVG_BAG} ${job.industry}</span>
       <span class="meta-tag">${SVG_CLK} ${job.posted}</span>
     </div>
@@ -157,16 +109,16 @@ function renderJobCard(job) {
     <div class="job-footer">
       <span class="salary">${job.salaryDisplay}</span>
       <span class="job-type-badge ${typeClass}">${job.type}</span>
-      <a href="contact.html" class="btn btn-primary btn-sm">Apply Now</a>
+      <button class="btn btn-primary btn-sm" onclick="openJobModal(${job.id})">Apply Now</button>
     </div>
   </div>`;
 }
 
-// ── Render Accommodation Cards ────────────────────────
+// ── Render accommodation card ─────────────────────────────────
 function renderAccCard(acc) {
   const typeClass = acc.type==='PG'?'badge-pg':acc.type==='Hostel'?'badge-hostel':'badge-apartment';
   return `
-  <div class="acc-card reveal" data-city="${acc.city}" data-type="${acc.type}" data-gender="${acc.gender}" data-price="${acc.price}">
+  <div class="acc-card reveal card-glow" data-id="${acc.id}">
     <div class="acc-thumb" style="background:${acc.color}">
       <span class="acc-type-badge ${typeClass}">${acc.type}</span>
       <span class="gender-badge">${acc.gender}</span>
@@ -178,27 +130,185 @@ function renderAccCard(acc) {
       <div class="acc-amenities">${acc.amenities.map(a=>`<span class="amenity">${a}</span>`).join('')}</div>
       <div class="acc-footer">
         <div class="acc-price">₹${acc.price.toLocaleString()}<span>/month</span></div>
-        <div class="acc-rating"><span class="star">★</span>${acc.rating}</div>
-        <a href="contact.html" class="btn btn-primary btn-sm">Enquire</a>
+        <div class="acc-rating">${SVG_STAR}${acc.rating}</div>
+        <button class="btn btn-primary btn-sm" onclick="openAccModal(${acc.id})">Enquire</button>
       </div>
     </div>
   </div>`;
 }
 
-// ── Jobs page init ─────────────────────────────────────
-function initJobsPage() {
+// ── In-memory cache ───────────────────────────────────────────
+let _jobsCache = null;
+let _accCache  = null;
+
+async function getJobs(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await apiFetch('/jobs' + (qs ? '?' + qs : ''));
+  return res.data;
+}
+
+async function getAccommodation(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await apiFetch('/accommodation' + (qs ? '?' + qs : ''));
+  return res.data;
+}
+
+// ── Modal HTML factory ────────────────────────────────────────
+function getModalContainer() {
+  let m = document.getElementById('gjModal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = 'gjModal';
+    m.className = 'modal-overlay';
+    m.addEventListener('click', e => { if (e.target === m) closeModal(); });
+    document.body.appendChild(m);
+  }
+  return m;
+}
+function closeModal() {
+  const m = document.getElementById('gjModal');
+  if (m) { m.classList.remove('modal-open'); setTimeout(() => m.innerHTML = '', 300); }
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// ── Job detail modal ──────────────────────────────────────────
+async function openJobModal(id) {
+  try {
+    const res = await apiFetch(`/jobs/${id}`);
+    const job = res.data;
+    const m = getModalContainer();
+    const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
+    m.innerHTML = `
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-header">
+        <div class="company-logo lg" style="background:${job.logoColor}">${job.logo}</div>
+        <div>
+          <div class="modal-title">${job.title}</div>
+          <div class="modal-subtitle">${job.company} · ${job.area}, ${job.city}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <span class="job-type-badge ${typeClass}">${job.type}</span>
+            <span class="meta-tag">${SVG_BAG} ${job.industry}</span>
+            <span class="meta-tag">${SVG_CLK} Posted ${job.posted}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-salary">💰 ${job.salaryDisplay} &nbsp;·&nbsp; ${job.openings} opening${job.openings>1?'s':''}</div>
+      <div class="modal-section"><strong>About the Role</strong><p>${job.desc}</p></div>
+      <div class="modal-section"><strong>Skills Required</strong>
+        <div class="job-skills" style="margin-top:8px">${job.skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>
+      </div>
+      <div class="modal-section"><strong>Requirements</strong>
+        <ul class="modal-list">${(job.requirements||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
+      </div>
+      <div class="modal-section"><strong>Benefits</strong>
+        <ul class="modal-list">${(job.benefits||[]).map(b=>`<li>${b}</li>`).join('')}</ul>
+      </div>
+      <hr class="modal-divider"/>
+      <div class="modal-section"><strong>Quick Apply</strong>
+        <form class="modal-form" id="applyForm">
+          <div class="mform-row">
+            <input class="form-input" type="text"  id="apName"  placeholder="Your full name *" required/>
+            <input class="form-input" type="email" id="apEmail" placeholder="Email address *" required/>
+          </div>
+          <input class="form-input" type="tel" id="apPhone" placeholder="Phone number (optional)" style="margin-top:10px"/>
+          <textarea class="form-textarea" id="apNote" placeholder="Short cover note (optional)" style="margin-top:10px;min-height:80px"></textarea>
+          <button type="submit" class="form-submit" id="applyBtn" style="margin-top:16px">Submit Application</button>
+        </form>
+      </div>
+    </div>`;
+    requestAnimationFrame(() => m.classList.add('modal-open'));
+    document.getElementById('applyForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('applyBtn');
+      btn.textContent = 'Submitting…'; btn.disabled = true;
+      try {
+        const res = await apiFetch('/contact/apply', {
+          method: 'POST',
+          body: JSON.stringify({ applicantName: document.getElementById('apName').value, applicantEmail: document.getElementById('apEmail').value, applicantPhone: document.getElementById('apPhone').value, coverNote: document.getElementById('apNote').value, jobId: job.id, jobTitle: job.title }),
+        });
+        closeModal();
+        showToast(res.message);
+      } catch (err) { showToast(err.message, 'error'); btn.textContent = 'Submit Application'; btn.disabled = false; }
+    });
+  } catch { showToast('Could not load job details. Please try again.', 'error'); }
+}
+
+// ── Accommodation detail modal ────────────────────────────────
+async function openAccModal(id) {
+  try {
+    const res = await apiFetch(`/accommodation/${id}`);
+    const acc = res.data;
+    const m = getModalContainer();
+    const typeClass = acc.type==='PG'?'badge-pg':acc.type==='Hostel'?'badge-hostel':'badge-apartment';
+    m.innerHTML = `
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-acc-thumb" style="background:${acc.color}">
+        <span class="acc-type-badge ${typeClass}">${acc.type}</span>
+        <span class="gender-badge">${acc.gender}</span>
+        <div class="acc-rating-lg">${SVG_STAR} ${acc.rating}</div>
+      </div>
+      <div class="modal-header" style="margin-top:16px">
+        <div>
+          <div class="modal-title">${acc.name}</div>
+          <div class="modal-subtitle">${SVG_PIN} ${acc.area}, ${acc.city}</div>
+          <div class="modal-subtitle">${SVG_WALK} ${acc.distance}</div>
+        </div>
+        <div class="modal-price-box">₹${acc.price.toLocaleString()}<span>/mo</span></div>
+      </div>
+      <div class="modal-section"><strong>About this Property</strong><p>${acc.desc||'A verified accommodation listing on Good Jobs.'}</p></div>
+      <div class="modal-section"><strong>Amenities</strong>
+        <div class="acc-amenities" style="margin-top:8px">${acc.amenities.map(a=>`<span class="amenity">${a}</span>`).join('')}</div>
+      </div>
+      <div class="modal-section"><strong>Contact Owner</strong>
+        <p style="color:var(--text-muted);font-size:.9rem">${acc.ownerName||'Verified Owner'} · <a href="tel:${acc.ownerPhone}" style="color:var(--primary-light)">${acc.ownerPhone||'Available on request'}</a></p>
+      </div>
+      <hr class="modal-divider"/>
+      <div class="modal-section"><strong>Send an Enquiry</strong>
+        <form class="modal-form" id="enquireForm">
+          <div class="mform-row">
+            <input class="form-input" type="text"  id="enName"  placeholder="Your full name *" required/>
+            <input class="form-input" type="email" id="enEmail" placeholder="Email address *" required/>
+          </div>
+          <input class="form-input" type="tel" id="enPhone" placeholder="Phone number (optional)" style="margin-top:10px"/>
+          <textarea class="form-textarea" id="enMsg" placeholder="Your message to the owner (optional)" style="margin-top:10px;min-height:80px"></textarea>
+          <button type="submit" class="form-submit" id="enquireBtn" style="margin-top:16px">Send Enquiry</button>
+        </form>
+      </div>
+    </div>`;
+    requestAnimationFrame(() => m.classList.add('modal-open'));
+    document.getElementById('enquireForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const btn = document.getElementById('enquireBtn');
+      btn.textContent = 'Sending…'; btn.disabled = true;
+      try {
+        const r = await apiFetch('/contact/enquire', {
+          method: 'POST',
+          body: JSON.stringify({ enquirerName: document.getElementById('enName').value, enquirerEmail: document.getElementById('enEmail').value, enquirerPhone: document.getElementById('enPhone').value, message: document.getElementById('enMsg').value, accId: acc.id, accName: acc.name }),
+        });
+        closeModal();
+        showToast(r.message);
+      } catch (err) { showToast(err.message, 'error'); btn.textContent = 'Send Enquiry'; btn.disabled = false; }
+    });
+  } catch { showToast('Could not load accommodation details. Please try again.', 'error'); }
+}
+
+// ── Jobs page ─────────────────────────────────────────────────
+async function initJobsPage() {
   const grid = document.getElementById('jobsGrid');
   if (!grid) return;
+  let allJobs = [];
+  grid.innerHTML = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Loading jobs…</div>`;
+  try {
+    allJobs = await getJobs();
+    _jobsCache = allJobs;
+  } catch { grid.innerHTML = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Could not load jobs. <a href="#" onclick="initJobsPage();return false" style="color:var(--primary-light)">Retry</a></div>`; return; }
 
-  let filtered = [...JOBS];
-
-  function render() {
-    grid.innerHTML = filtered.length
-      ? filtered.map(renderJobCard).join('')
-      : `<div class="no-results"><div class="icon">🔍</div><h3>No jobs found</h3><p>Try adjusting your filters.</p></div>`;
+  function render(jobs) {
+    grid.innerHTML = jobs.length ? jobs.map(renderJobCard).join('') : `<div class="no-results"><div class="icon">🔍</div><h3>No jobs found</h3><p>Try adjusting your filters.</p></div>`;
     const count = document.getElementById('resultsCount');
-    if (count) count.textContent = filtered.length;
-    // re-observe reveals
+    if (count) count.textContent = jobs.length;
     grid.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   }
 
@@ -208,40 +318,37 @@ function initJobsPage() {
     const type     = document.getElementById('filterType')?.value     || '';
     const salary   = document.getElementById('filterSalary')?.value   || '';
     const search   = document.getElementById('jobSearch')?.value.toLowerCase() || '';
-
-    filtered = JOBS.filter(j => {
-      if (city     && j.city     !== city)     return false;
-      if (industry && j.industry !== industry) return false;
-      if (type     && j.type     !== type)     return false;
-      if (salary   && j.salaryMin < parseInt(salary))  return false;
+    render(allJobs.filter(j => {
+      if (city     && j.city !== city)          return false;
+      if (industry && j.industry !== industry)  return false;
+      if (type     && j.type !== type)          return false;
+      if (salary   && j.salaryMin < parseInt(salary)) return false;
       if (search   && !j.title.toLowerCase().includes(search) && !j.company.toLowerCase().includes(search)) return false;
       return true;
-    });
-    render();
+    }));
   }
 
-  ['filterCity','filterIndustry','filterType','filterSalary'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', applyFilters);
-  });
+  ['filterCity','filterIndustry','filterType','filterSalary'].forEach(id => document.getElementById(id)?.addEventListener('change', applyFilters));
   document.getElementById('jobSearch')?.addEventListener('input', applyFilters);
   document.getElementById('filterBtn')?.addEventListener('click', applyFilters);
-
-  render();
+  render(allJobs);
 }
 
-// ── Accommodation page init ───────────────────────────
-function initAccPage() {
+// ── Accommodation page ────────────────────────────────────────
+async function initAccPage() {
   const grid = document.getElementById('accGrid');
   if (!grid) return;
+  let allAcc = [];
+  grid.innerHTML = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Loading listings…</div>`;
+  try {
+    allAcc = await getAccommodation();
+    _accCache = allAcc;
+  } catch { grid.innerHTML = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Could not load listings. <a href="#" onclick="initAccPage();return false" style="color:var(--primary-light)">Retry</a></div>`; return; }
 
-  let filtered = [...ACCOMMODATION];
-
-  function render() {
-    grid.innerHTML = filtered.length
-      ? filtered.map(renderAccCard).join('')
-      : `<div class="no-results"><div class="icon">🏠</div><h3>No accommodation found</h3><p>Try adjusting your filters.</p></div>`;
+  function render(acc) {
+    grid.innerHTML = acc.length ? acc.map(renderAccCard).join('') : `<div class="no-results"><div class="icon">🏠</div><h3>No accommodation found</h3><p>Try adjusting your filters.</p></div>`;
     const count = document.getElementById('accCount');
-    if (count) count.textContent = filtered.length;
+    if (count) count.textContent = acc.length;
     grid.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   }
 
@@ -251,77 +358,119 @@ function initAccPage() {
     const gender = document.getElementById('accGender')?.value || '';
     const price  = document.getElementById('accPrice')?.value  || '';
     const search = document.getElementById('accSearch')?.value.toLowerCase() || '';
-
-    filtered = ACCOMMODATION.filter(a => {
-      if (city   && a.city   !== city)   return false;
-      if (type   && a.type   !== type)   return false;
+    render(allAcc.filter(a => {
+      if (city   && a.city !== city)   return false;
+      if (type   && a.type !== type)   return false;
       if (gender && a.gender !== gender && a.gender !== 'Any') return false;
-      if (price  && a.price  >  parseInt(price))  return false;
+      if (price  && a.price > parseInt(price))  return false;
       if (search && !a.name.toLowerCase().includes(search) && !a.area.toLowerCase().includes(search)) return false;
       return true;
-    });
-    render();
+    }));
   }
 
-  ['accCity','accType','accGender','accPrice'].forEach(id => {
-    document.getElementById(id)?.addEventListener('change', applyFilters);
-  });
+  ['accCity','accType','accGender','accPrice'].forEach(id => document.getElementById(id)?.addEventListener('change', applyFilters));
   document.getElementById('accSearch')?.addEventListener('input', applyFilters);
   document.getElementById('accFilterBtn')?.addEventListener('click', applyFilters);
-
-  render();
+  render(allAcc);
 }
 
-// ── Home page featured cards ──────────────────────────
-function initHomePage() {
+// ── Home page ─────────────────────────────────────────────────
+async function initHomePage() {
   const featJobs = document.getElementById('featuredJobs');
-  if (featJobs) featJobs.innerHTML = JOBS.slice(0,4).map(renderJobCard).join('');
-
-  const featAcc = document.getElementById('featuredAcc');
-  if (featAcc) featAcc.innerHTML = ACCOMMODATION.slice(0,4).map(renderAccCard).join('');
-
-  // re-observe
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  const featAcc  = document.getElementById('featuredAcc');
+  if (!featJobs && !featAcc) return;
+  try {
+    if (featJobs) {
+      const jobs = await getJobs();
+      featJobs.innerHTML = jobs.slice(0, 4).map(renderJobCard).join('');
+    }
+    if (featAcc) {
+      const acc = await getAccommodation();
+      featAcc.innerHTML = acc.slice(0, 4).map(renderAccCard).join('');
+    }
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  } catch {
+    if (featJobs) featJobs.innerHTML = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Could not load listings.</div>`;
+    if (featAcc)  featAcc.innerHTML  = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Could not load listings.</div>`;
+  }
 }
 
-// ── Hero search forward ───────────────────────────────
+// ── Hero search ───────────────────────────────────────────────
 const heroSearchBtn = document.getElementById('heroSearchBtn');
 if (heroSearchBtn) {
   heroSearchBtn.addEventListener('click', () => {
     const q    = document.getElementById('heroSearchInput')?.value || '';
     const type = document.getElementById('heroSearchType')?.value  || 'jobs';
-    const url  = type === 'accommodation'
-      ? `accommodation.html${q ? '?q='+encodeURIComponent(q) : ''}`
-      : `jobs.html${q ? '?q='+encodeURIComponent(q) : ''}`;
-    window.location.href = url;
+    window.location.href = type === 'accommodation'
+      ? `accommodation.html${q ? '?q=' + encodeURIComponent(q) : ''}`
+      : `jobs.html${q ? '?q=' + encodeURIComponent(q) : ''}`;
   });
-  document.getElementById('heroSearchInput')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') heroSearchBtn.click();
-  });
+  document.getElementById('heroSearchInput')?.addEventListener('keydown', e => { if (e.key === 'Enter') heroSearchBtn.click(); });
 }
 
-// ── Contact form submit ───────────────────────────────
-document.querySelectorAll('.contact-form').forEach(form => {
-  form.addEventListener('submit', e => {
-    e.preventDefault();
-    const btn = form.querySelector('.form-submit');
-    const orig = btn.textContent;
-    btn.textContent = '✓ Submitted! We\'ll be in touch soon.';
-    btn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
-    setTimeout(() => { btn.textContent = orig; btn.style.background = ''; }, 4000);
+// ── URL param pre-fill ────────────────────────────────────────
+const qParam = new URLSearchParams(window.location.search).get('q');
+if (qParam) {
+  const inp = document.getElementById('jobSearch') || document.getElementById('accSearch');
+  if (inp) { inp.value = qParam; }
+}
+
+// ── Contact page tabs ─────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById(target);
+    if (panel) panel.classList.add('active');
   });
 });
 
-// ── Init ──────────────────────────────────────────────
+// ── Contact forms → API ───────────────────────────────────────
+async function submitContactForm(formId, endpoint, mapFn) {
+  const form = document.getElementById(formId);
+  if (!form) return;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn = form.querySelector('.form-submit');
+    const orig = btn.textContent;
+    btn.textContent = 'Submitting…'; btn.disabled = true;
+    try {
+      const data = Object.fromEntries(new FormData(form).entries());
+      // Also grab selects/textareas not caught by FormData in some browsers
+      form.querySelectorAll('input,select,textarea').forEach(el => { if (el.id) data[el.id] = el.value; });
+      const mapped = mapFn ? mapFn(data) : data;
+      const res = await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(mapped) });
+      form.reset();
+      showToast(res.message);
+    } catch (err) { showToast(err.message || 'Submission failed. Please try again.', 'error'); }
+    btn.textContent = orig; btn.disabled = false;
+  });
+}
+
+submitContactForm('jobForm',     '/contact/job',     d => d);
+submitContactForm('roomForm',    '/contact/room',    d => d);
+submitContactForm('generalForm', '/contact/general', d => d);
+
+// ── Newsletter forms → API ────────────────────────────────────
+document.querySelectorAll('.newsletter-form').forEach(form => {
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const btn   = form.querySelector('button');
+    const email = form.querySelector('input[type="email"]')?.value;
+    const orig  = btn.textContent;
+    btn.textContent = '…'; btn.disabled = true;
+    try {
+      const res = await apiFetch('/newsletter', { method: 'POST', body: JSON.stringify({ email }) });
+      showToast(res.message);
+      form.reset();
+    } catch (err) { showToast(err.message || 'Please try again.', 'error'); }
+    btn.textContent = orig; btn.disabled = false;
+  });
+});
+
+// ── Init ──────────────────────────────────────────────────────
 initHomePage();
 initJobsPage();
 initAccPage();
-
-// pre-fill search from URL params
-const urlParams = new URLSearchParams(window.location.search);
-const qParam = urlParams.get('q');
-if (qParam) {
-  const inp = document.getElementById('jobSearch') || document.getElementById('accSearch');
-  if (inp) { inp.value = qParam; inp.dispatchEvent(new Event('input')); }
-}
-

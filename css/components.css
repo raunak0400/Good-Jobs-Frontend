@@ -264,3 +264,63 @@
   .no-results .icon{font-size:2.4rem;}
 }
 
+/* ── MODAL ────────────────────────────────────────────────── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;
+  background:rgba(4,8,18,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  padding:20px;opacity:0;pointer-events:none;transition:opacity .3s ease;
+}
+.modal-overlay.modal-open{opacity:1;pointer-events:all;}
+.modal-box{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
+  max-width:640px;width:100%;max-height:90vh;overflow-y:auto;position:relative;
+  padding:32px;box-shadow:0 24px 80px rgba(0,0,0,.7);
+  transform:translateY(20px);transition:transform .3s cubic-bezier(.4,0,.2,1);
+}
+.modal-overlay.modal-open .modal-box{transform:translateY(0);}
+.modal-close{
+  position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;
+  border:none;background:var(--surface-2);color:var(--text-muted);cursor:pointer;
+  font-size:1rem;display:flex;align-items:center;justify-content:center;transition:var(--transition);
+}
+.modal-close:hover{background:rgba(239,68,68,.2);color:#EF4444;}
+.modal-header{display:flex;align-items:flex-start;gap:16px;margin-bottom:20px;}
+.modal-title{font-family:var(--font-head);font-size:1.35rem;font-weight:800;margin-bottom:4px;}
+.modal-subtitle{font-size:.9rem;color:var(--text-muted);display:flex;align-items:center;gap:6px;margin-top:4px;}
+.modal-salary{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.25);border-radius:var(--radius);padding:10px 16px;font-family:var(--font-head);font-weight:700;color:var(--accent);margin-bottom:20px;font-size:.95rem;}
+.modal-section{margin-bottom:20px;}
+.modal-section strong{display:block;font-size:.9rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+.modal-section p{color:var(--text-muted);font-size:.95rem;line-height:1.7;}
+.modal-list{padding-left:0;display:flex;flex-direction:column;gap:6px;}
+.modal-list li{color:var(--text-muted);font-size:.9rem;padding-left:16px;position:relative;}
+.modal-list li::before{content:"▸";position:absolute;left:0;color:var(--primary-light);}
+.modal-divider{border:none;border-top:1px solid var(--border);margin:20px 0;}
+.modal-form{display:flex;flex-direction:column;gap:0;}
+.mform-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.modal-acc-thumb{height:180px;border-radius:var(--radius-lg);position:relative;display:flex;align-items:flex-end;justify-content:flex-end;padding:12px;margin-bottom:4px;}
+.acc-rating-lg{background:rgba(0,0,0,.55);backdrop-filter:blur(6px);border-radius:var(--radius-full);padding:4px 10px;font-size:.85rem;color:var(--accent);display:flex;align-items:center;gap:4px;}
+.modal-price-box{background:linear-gradient(135deg,rgba(13,148,136,.2),rgba(13,148,136,.05));border:1px solid rgba(13,148,136,.3);border-radius:var(--radius);padding:12px 18px;font-family:var(--font-head);font-weight:800;font-size:1.4rem;color:var(--accent);white-space:nowrap;flex-shrink:0;}
+.modal-price-box span{font-size:.75rem;font-weight:400;color:var(--text-subtle);font-family:var(--font-body);}
+.company-logo.lg{width:64px;height:64px;border-radius:var(--radius-lg);font-size:1.3rem;flex-shrink:0;}
+
+/* ── TOAST NOTIFICATIONS ──────────────────────────────────── */
+#toastContainer{position:fixed;bottom:24px;right:24px;z-index:2000;display:flex;flex-direction:column;gap:10px;pointer-events:none;}
+.toast{
+  display:flex;align-items:center;gap:10px;padding:14px 20px;
+  border-radius:var(--radius);backdrop-filter:blur(16px);
+  font-size:.9rem;font-weight:500;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.4);
+  transform:translateX(120%);transition:transform .35s cubic-bezier(.4,0,.2,1);pointer-events:auto;
+}
+.toast.toast-show{transform:translateX(0);}
+.toast-success{background:rgba(22,163,74,.9);border:1px solid rgba(34,197,94,.4);color:#fff;}
+.toast-error{background:rgba(220,38,38,.9);border:1px solid rgba(239,68,68,.4);color:#fff;}
+
+/* ── MODAL RESPONSIVE ─────────────────────────────────────── */
+@media(max-width:600px){
+  .modal-box{padding:20px 16px;}
+  .modal-title{font-size:1.15rem;}
+  .mform-row{grid-template-columns:1fr;}
+  .modal-price-box{font-size:1.1rem;}
+  .modal-acc-thumb{height:140px;}
+}
+

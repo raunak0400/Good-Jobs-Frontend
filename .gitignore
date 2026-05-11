@@ -1,0 +1,10 @@
+# Exclude backend (separate repo)
+backend/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
