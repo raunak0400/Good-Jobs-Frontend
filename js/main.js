@@ -3,10 +3,10 @@
    ============================================================ */
 
 // ── API Base URL ─────────────────────────────────────────────
-// Change this to your Render URL after deployment
+// Backend deployed on Render: https://good-jobs-backend.onrender.com
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3000/api'
-  : 'https://goodjobs-api.onrender.com/api';
+  : 'https://good-jobs-backend.onrender.com/api';
 
 // ── Navbar scroll ────────────────────────────────────────────
 const navbar = document.getElementById('navbar');
