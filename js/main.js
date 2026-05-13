@@ -263,7 +263,7 @@ async function openJobModal(id) {
           </form>
         </div>
       </div>
-    </div>\`;
+    </div>`;
 
     requestAnimationFrame(() => m.classList.add('modal-open'));
 
@@ -321,7 +321,7 @@ async function openJobModal(id) {
       if (file.size > 5 * 1024 * 1024) {
         showToast('File size must be under 5 MB.', 'error'); return;
       }
-      fileNameEl.textContent = \`\${file.name} (\${(file.size/1024).toFixed(0)} KB)\`;
+      fileNameEl.textContent = `${file.name} (${(file.size/1024).toFixed(0)} KB)`;
       fileInfo.style.display = 'flex';
       browseBtn.style.display = 'none';
       resumeZone.classList.add('has-file');
@@ -357,7 +357,7 @@ async function openJobModal(id) {
             jobTitle: job.title,
             fileName: file.name,
             fileType: file.type,
-            fileSize: \`\${(file.size/1024).toFixed(0)} KB\`,
+            fileSize: `${(file.size/1024).toFixed(0)} KB`,
             fileBase64: base64,
           }),
         });
@@ -365,7 +365,7 @@ async function openJobModal(id) {
         showToast(result.message);
       } catch (err) {
         showToast(err.message || 'Upload failed. Please try again.', 'error');
-        submitBtn.innerHTML = \`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg> Submit Application\`;
+        submitBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg> Submit Application`;
         submitBtn.disabled = false;
       }
     });
