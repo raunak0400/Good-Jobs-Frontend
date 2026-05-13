@@ -324,3 +324,129 @@
   .modal-acc-thumb{height:140px;}
 }
 
+/* ── 3-STEP APPLY FLOW ────────────────────────────────────── */
+
+/* Big "Apply Now" hero button (Step 1) */
+.apply-now-hero{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;padding:18px 32px;border:none;border-radius:var(--radius-lg);cursor:pointer;
+  background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);
+  color:#fff;font-size:1.15rem;font-weight:800;font-family:var(--font-head);
+  letter-spacing:0.02em;
+  box-shadow:0 6px 30px var(--primary-glow),0 2px 0 rgba(255,255,255,.08) inset;
+  transition:transform .2s ease,box-shadow .2s ease,background .2s ease;
+  position:relative;overflow:hidden;
+}
+.apply-now-hero::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.12),transparent);
+  pointer-events:none;
+}
+.apply-now-hero:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 40px var(--primary-glow),0 2px 0 rgba(255,255,255,.12) inset;
+}
+.apply-now-hero:active{transform:translateY(-1px);}
+.apply-now-hero.applied-click{
+  background:linear-gradient(135deg,var(--primary-dark),#065f46);
+  pointer-events:none;
+}
+.apply-now-hero svg{flex-shrink:0;}
+
+/* Step 2 slide-in panel */
+.apply-step2{
+  max-height:0;overflow:hidden;
+  transition:max-height .55s cubic-bezier(.4,0,.2,1),opacity .4s ease;
+  opacity:0;
+}
+.apply-step2.step2-visible{
+  max-height:900px;
+  opacity:1;
+}
+
+/* Submit button disabled/enabled state */
+.apply-submit-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  opacity:.5;cursor:not-allowed;transition:opacity .2s,transform .2s,box-shadow .2s;
+}
+.apply-submit-btn:not(:disabled){opacity:1;cursor:pointer;}
+.apply-submit-btn:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 25px var(--primary-glow);}
+
+/* ── RESUME UPLOAD ZONE ───────────────────────────────────── */
+.resume-upload-zone{
+  margin-top:14px;
+  border:2px dashed var(--border);
+  border-radius:var(--radius-lg);
+  background:rgba(13,148,136,.04);
+  padding:28px 20px 22px;
+  text-align:center;
+  cursor:pointer;
+  transition:border-color .25s,background .25s,transform .2s;
+  position:relative;
+}
+.resume-upload-zone:hover,.resume-upload-zone.drag-over{
+  border-color:var(--primary);
+  background:rgba(13,148,136,.08);
+  transform:translateY(-2px);
+}
+.resume-upload-zone.has-file{
+  border-color:rgba(34,197,94,.5);
+  background:rgba(34,197,94,.05);
+  cursor:default;
+}
+.resume-upload-icon{
+  width:60px;height:60px;border-radius:50%;
+  background:rgba(13,148,136,.12);border:1px solid rgba(13,148,136,.25);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 12px;color:var(--primary-light);
+  transition:background .25s,transform .25s;
+}
+.resume-upload-zone:hover .resume-upload-icon,
+.resume-upload-zone.drag-over .resume-upload-icon{
+  background:rgba(13,148,136,.2);transform:scale(1.08);
+}
+.resume-upload-label{
+  font-family:var(--font-head);font-weight:700;font-size:1rem;
+  color:var(--text);margin:0 0 4px;
+}
+.resume-required{color:#EF4444;}
+.resume-upload-hint{font-size:.8rem;color:var(--text-subtle);margin:0 0 14px;}
+
+.resume-browse-btn{
+  padding:8px 22px;border-radius:var(--radius-sm);border:1.5px solid var(--primary);
+  background:transparent;color:var(--primary-light);font-weight:600;font-size:.875rem;
+  cursor:pointer;font-family:var(--font-body);transition:var(--transition);
+}
+.resume-browse-btn:hover{background:rgba(13,148,136,.15);}
+
+.resume-file-info{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);
+  border-radius:var(--radius-sm);padding:8px 14px;margin-top:4px;
+}
+.resume-file-icon{font-size:1.2rem;flex-shrink:0;}
+.resume-file-name{flex:1;font-size:.85rem;color:var(--text);text-align:left;word-break:break-all;}
+.resume-file-remove{
+  background:none;border:none;cursor:pointer;color:var(--text-subtle);
+  font-size:.9rem;padding:0;line-height:1;flex-shrink:0;
+  transition:color .2s;
+}
+.resume-file-remove:hover{color:#EF4444;}
+
+/* ── SPINNER for upload state ─────────────────────────────── */
+.btn-spinner{
+  width:16px;height:16px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;
+  animation:spin .7s linear infinite;
+  display:inline-block;flex-shrink:0;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* Responsive tweaks */
+@media(max-width:600px){
+  .apply-now-hero{font-size:1rem;padding:16px 20px;}
+  .resume-upload-zone{padding:20px 14px 16px;}
+  .resume-upload-icon{width:48px;height:48px;}
+}
+

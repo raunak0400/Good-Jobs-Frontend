@@ -171,16 +171,20 @@ function closeModal() {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// ── Job detail modal ──────────────────────────────────────────
+// ── Job detail modal (3-step apply flow) ─────────────────────
 async function openJobModal(id) {
   try {
     const res = await apiFetch(`/jobs/${id}`);
     const job = res.data;
     const m = getModalContainer();
     const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
+
+    // ── Step 1: Full company details + big "Apply Now" button ─
     m.innerHTML = `
-    <div class="modal-box">
+    <div class="modal-box" id="modalBox">
       <button class="modal-close" onclick="closeModal()">✕</button>
+
+      <!-- Company Header -->
       <div class="modal-header">
         <div class="company-logo lg" style="background:${job.logoColor}">${job.logo}</div>
         <div>
@@ -193,44 +197,179 @@ async function openJobModal(id) {
           </div>
         </div>
       </div>
+
+      <!-- Salary -->
       <div class="modal-salary">💰 ${job.salaryDisplay} &nbsp;·&nbsp; ${job.openings} opening${job.openings>1?'s':''}</div>
-      <div class="modal-section"><strong>About the Role</strong><p>${job.desc}</p></div>
-      <div class="modal-section"><strong>Skills Required</strong>
-        <div class="job-skills" style="margin-top:8px">${job.skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>
+
+      <!-- Full Company Details -->
+      <div class="modal-company-details">
+        <div class="modal-section"><strong>About the Role</strong><p>${job.desc}</p></div>
+        <div class="modal-section"><strong>Skills Required</strong>
+          <div class="job-skills" style="margin-top:8px">${job.skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>
+        </div>
+        <div class="modal-section"><strong>Requirements</strong>
+          <ul class="modal-list">${(job.requirements||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
+        </div>
+        <div class="modal-section"><strong>Benefits</strong>
+          <ul class="modal-list">${(job.benefits||[]).map(b=>`<li>${b}</li>`).join('')}</ul>
+        </div>
       </div>
-      <div class="modal-section"><strong>Requirements</strong>
-        <ul class="modal-list">${(job.requirements||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
-      </div>
-      <div class="modal-section"><strong>Benefits</strong>
-        <ul class="modal-list">${(job.benefits||[]).map(b=>`<li>${b}</li>`).join('')}</ul>
-      </div>
+
       <hr class="modal-divider"/>
-      <div class="modal-section"><strong>Quick Apply</strong>
-        <form class="modal-form" id="applyForm">
-          <div class="mform-row">
-            <input class="form-input" type="text"  id="apName"  placeholder="Your full name *" required/>
-            <input class="form-input" type="email" id="apEmail" placeholder="Email address *" required/>
-          </div>
-          <input class="form-input" type="tel" id="apPhone" placeholder="Phone number (optional)" style="margin-top:10px"/>
-          <textarea class="form-textarea" id="apNote" placeholder="Short cover note (optional)" style="margin-top:10px;min-height:80px"></textarea>
-          <button type="submit" class="form-submit" id="applyBtn" style="margin-top:16px">Submit Application</button>
-        </form>
+
+      <!-- Big Apply Now button (Step 1 → Step 2 trigger) -->
+      <button class="apply-now-hero" id="applyNowHero">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
+        Apply Now
+      </button>
+
+      <!-- Step 2: Application form + Resume upload (hidden initially) -->
+      <div class="apply-step2" id="applyStep2">
+        <hr class="modal-divider" style="margin-top:24px"/>
+        <div class="modal-section" style="margin-top:0">
+          <strong>Your Details</strong>
+          <form class="modal-form" id="applyForm" style="margin-top:12px">
+            <div class="mform-row">
+              <input class="form-input" type="text"  id="apName"  placeholder="Your full name *" required/>
+              <input class="form-input" type="email" id="apEmail" placeholder="Email address *" required/>
+            </div>
+            <input class="form-input" type="tel" id="apPhone" placeholder="Phone number (optional)" style="margin-top:10px"/>
+            <textarea class="form-textarea" id="apNote" placeholder="Short cover note (optional)" style="margin-top:10px;min-height:70px"></textarea>
+
+            <!-- Resume Upload Zone -->
+            <div class="resume-upload-zone" id="resumeZone">
+              <div class="resume-upload-icon">
+                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+              </div>
+              <p class="resume-upload-label">Upload Your Resume <span class="resume-required">*</span></p>
+              <p class="resume-upload-hint">PDF or Word · Max 5 MB</p>
+              <input type="file" id="resumeFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none"/>
+              <button type="button" class="resume-browse-btn" id="resumeBrowseBtn">Browse Files</button>
+              <div class="resume-file-info" id="resumeFileInfo" style="display:none">
+                <span class="resume-file-icon">📄</span>
+                <span class="resume-file-name" id="resumeFileName"></span>
+                <button type="button" class="resume-file-remove" id="resumeFileRemove">✕</button>
+              </div>
+            </div>
+
+            <button type="submit" class="form-submit apply-submit-btn" id="applyBtn" style="margin-top:16px" disabled>
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>
+              Submit Application
+            </button>
+          </form>
+        </div>
       </div>
-    </div>`;
+    </div>\`;
+
     requestAnimationFrame(() => m.classList.add('modal-open'));
+
+    // ── Step 1 → Step 2: Show apply form when "Apply Now" is clicked ─
+    const heroBtn   = document.getElementById('applyNowHero');
+    const step2     = document.getElementById('applyStep2');
+    const submitBtn = document.getElementById('applyBtn');
+
+    heroBtn.addEventListener('click', () => {
+      heroBtn.classList.add('applied-click');
+      setTimeout(() => {
+        step2.classList.add('step2-visible');
+        step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 200);
+    });
+
+    // ── Resume file input wiring ───────────────────────────────
+    const fileInput      = document.getElementById('resumeFile');
+    const browseBtn      = document.getElementById('resumeBrowseBtn');
+    const fileInfo       = document.getElementById('resumeFileInfo');
+    const fileNameEl     = document.getElementById('resumeFileName');
+    const fileRemoveBtn  = document.getElementById('resumeFileRemove');
+    const resumeZone     = document.getElementById('resumeZone');
+
+    browseBtn.addEventListener('click', () => fileInput.click());
+
+    // Drag & drop
+    resumeZone.addEventListener('dragover', e => { e.preventDefault(); resumeZone.classList.add('drag-over'); });
+    resumeZone.addEventListener('dragleave', () => resumeZone.classList.remove('drag-over'));
+    resumeZone.addEventListener('drop', e => {
+      e.preventDefault();
+      resumeZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file) handleFileSelect(file);
+    });
+
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) handleFileSelect(fileInput.files[0]);
+    });
+
+    fileRemoveBtn.addEventListener('click', () => {
+      fileInput.value = '';
+      fileInfo.style.display = 'none';
+      browseBtn.style.display = '';
+      resumeZone.classList.remove('has-file');
+      submitBtn.disabled = true;
+    });
+
+    function handleFileSelect(file) {
+      const allowedExts = ['pdf', 'doc', 'docx'];
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!allowedExts.includes(ext)) {
+        showToast('Please upload a PDF or Word document.', 'error'); return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('File size must be under 5 MB.', 'error'); return;
+      }
+      fileNameEl.textContent = \`\${file.name} (\${(file.size/1024).toFixed(0)} KB)\`;
+      fileInfo.style.display = 'flex';
+      browseBtn.style.display = 'none';
+      resumeZone.classList.add('has-file');
+      submitBtn.disabled = false;
+    }
+
+    // ── Form submit: read file as base64, POST to /contact/resume ─
     document.getElementById('applyForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const btn = document.getElementById('applyBtn');
-      btn.textContent = 'Submitting…'; btn.disabled = true;
+      const file = fileInput.files[0];
+      if (!file) { showToast('Please upload your resume before submitting.', 'error'); return; }
+
+      submitBtn.innerHTML = '<span class="btn-spinner"></span> Uploading…';
+      submitBtn.disabled = true;
+
       try {
-        const res = await apiFetch('/contact/apply', {
+        // Convert file to base64
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const result = await apiFetch('/contact/resume', {
           method: 'POST',
-          body: JSON.stringify({ applicantName: document.getElementById('apName').value, applicantEmail: document.getElementById('apEmail').value, applicantPhone: document.getElementById('apPhone').value, coverNote: document.getElementById('apNote').value, jobId: job.id, jobTitle: job.title }),
+          body: JSON.stringify({
+            applicantName:  document.getElementById('apName').value,
+            applicantEmail: document.getElementById('apEmail').value,
+            applicantPhone: document.getElementById('apPhone').value || '',
+            coverNote:      document.getElementById('apNote').value  || '',
+            jobId:    job.id,
+            jobTitle: job.title,
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: \`\${(file.size/1024).toFixed(0)} KB\`,
+            fileBase64: base64,
+          }),
         });
         closeModal();
-        showToast(res.message);
-      } catch (err) { showToast(err.message, 'error'); btn.textContent = 'Submit Application'; btn.disabled = false; }
+        showToast(result.message);
+      } catch (err) {
+        showToast(err.message || 'Upload failed. Please try again.', 'error');
+        submitBtn.innerHTML = \`<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg> Submit Application\`;
+        submitBtn.disabled = false;
+      }
     });
+
   } catch { showToast('Could not load job details. Please try again.', 'error'); }
 }
 
