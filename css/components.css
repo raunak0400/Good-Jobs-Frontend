@@ -7,7 +7,7 @@
 .job-card::after{
   content:'';position:absolute;inset:0;border-radius:var(--radius-lg);
   background:linear-gradient(135deg,rgba(13,148,136,.04) 0%,transparent 60%);
-  opacity:0;transition:opacity .3s ease;
+  opacity:0;transition:opacity .3s ease;pointer-events:none;
 }
 .job-card:hover{border-color:rgba(13,148,136,.4);transform:translateY(-5px);box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(13,148,136,.15),var(--glow-p);}
 .job-card:hover::after{opacity:1;}
@@ -25,7 +25,7 @@
 .meta-tag svg,.meta-tag .icon{color:var(--primary-light);}
 .job-skills{display:flex;flex-wrap:wrap;gap:8px;}
 .skill-badge{padding:4px 12px;border-radius:var(--radius-full);background:rgba(13,148,136,.12);border:1px solid rgba(13,148,136,.2);color:var(--primary-light);font-size:.78rem;font-weight:500;}
-.job-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:12px;border-top:1px solid var(--border);}
+.job-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding-top:12px;border-top:1px solid var(--border);position:relative;z-index:1;}
 .salary{font-family:var(--font-head);font-weight:700;font-size:1rem;color:var(--accent);}
 .job-type-badge{padding:4px 12px;border-radius:var(--radius-full);font-size:.78rem;font-weight:600;}
 .badge-fulltime{background:rgba(13,148,136,.15);color:var(--primary-light);}
