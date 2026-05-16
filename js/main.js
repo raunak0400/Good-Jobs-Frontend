@@ -328,35 +328,24 @@ async function openJobModal(id) {
       submitBtn.disabled = false;
     }
 
-    // ── Form submit: upload DIRECTLY to Cloudinary from browser, then notify backend ─
+    // ── Form submit: read file as base64, send to backend which emails it as attachment ─
     document.getElementById('applyForm').addEventListener('submit', async e => {
       e.preventDefault();
       const file = fileInput.files[0];
       if (!file) { showToast('Please upload your resume before submitting.', 'error'); return; }
 
-      submitBtn.innerHTML = '<span class="btn-spinner"></span> Uploading CV…';
+      submitBtn.innerHTML = '<span class="btn-spinner"></span> Sending…';
       submitBtn.disabled = true;
 
       try {
-        // ── Step 1: Upload directly to Cloudinary from the browser (fast, bypasses backend cold-start) ──
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('upload_preset', 'goodjob_resumes');
-        formData.append('folder', 'goodjob-resumes');
-
-        const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dnylekibb/raw/upload', {
-          method: 'POST',
-          body: formData,
+        // Read file as base64 (strip the data URL prefix)
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
         });
-        if (!cloudRes.ok) {
-          const err = await cloudRes.json();
-          throw new Error(err.error?.message || 'CV upload failed. Please try again.');
-        }
-        const cloudData = await cloudRes.json();
-        const resumeUrl = cloudData.secure_url;
 
-        // ── Step 2: Notify backend (just sends the email — very fast) ──
-        submitBtn.innerHTML = '<span class="btn-spinner"></span> Submitting…';
         const result = await apiFetch('/contact/resume', {
           method: 'POST',
           body: JSON.stringify({
@@ -368,13 +357,13 @@ async function openJobModal(id) {
             jobTitle: job.title,
             fileName: file.name,
             fileSize: `${(file.size/1024).toFixed(0)} KB`,
-            resumeUrl,   // ← Cloudinary URL, not base64
+            fileBase64: base64,
           }),
         });
         closeModal();
         showToast(result.message);
       } catch (err) {
-        showToast(err.message || 'Upload failed. Please try again.', 'error');
+        showToast(err.message || 'Submission failed. Please try again.', 'error');
         submitBtn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg> Submit Application`;
         submitBtn.disabled = false;
       }
