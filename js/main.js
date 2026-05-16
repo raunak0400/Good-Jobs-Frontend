@@ -344,7 +344,7 @@ async function openJobModal(id) {
         formData.append('upload_preset', 'goodjob_resumes');
         formData.append('folder', 'goodjob-resumes');
 
-        const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dnylekibb/auto/upload', {
+        const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dnylekibb/raw/upload', {
           method: 'POST',
           body: formData,
         });
