@@ -5,7 +5,7 @@
 // ── API Base URL ─────────────────────────────────────────────
 // Backend deployed on Render: https://good-jobs-backend.onrender.com
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://localhost:3000/api'
+  ? 'https://good-jobs-backend.onrender.com/api'
   : 'https://good-jobs-backend.onrender.com/api';
 
 // ── Navbar scroll ────────────────────────────────────────────
@@ -328,24 +328,35 @@ async function openJobModal(id) {
       submitBtn.disabled = false;
     }
 
-    // ── Form submit: read file as base64, POST to /contact/resume ─
+    // ── Form submit: upload DIRECTLY to Cloudinary from browser, then notify backend ─
     document.getElementById('applyForm').addEventListener('submit', async e => {
       e.preventDefault();
       const file = fileInput.files[0];
       if (!file) { showToast('Please upload your resume before submitting.', 'error'); return; }
 
-      submitBtn.innerHTML = '<span class="btn-spinner"></span> Uploading…';
+      submitBtn.innerHTML = '<span class="btn-spinner"></span> Uploading CV…';
       submitBtn.disabled = true;
 
       try {
-        // Convert file to base64
-        const base64 = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload  = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        });
+        // ── Step 1: Upload directly to Cloudinary from the browser (fast, bypasses backend cold-start) ──
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'goodjob_resumes');
+        formData.append('folder', 'goodjob-resumes');
 
+        const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dnylekibb/raw/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!cloudRes.ok) {
+          const err = await cloudRes.json();
+          throw new Error(err.error?.message || 'CV upload failed. Please try again.');
+        }
+        const cloudData = await cloudRes.json();
+        const resumeUrl = cloudData.secure_url;
+
+        // ── Step 2: Notify backend (just sends the email — very fast) ──
+        submitBtn.innerHTML = '<span class="btn-spinner"></span> Submitting…';
         const result = await apiFetch('/contact/resume', {
           method: 'POST',
           body: JSON.stringify({
@@ -356,9 +367,8 @@ async function openJobModal(id) {
             jobId:    job.id,
             jobTitle: job.title,
             fileName: file.name,
-            fileType: file.type,
             fileSize: `${(file.size/1024).toFixed(0)} KB`,
-            fileBase64: base64,
+            resumeUrl,   // ← Cloudinary URL, not base64
           }),
         });
         closeModal();
@@ -370,7 +380,7 @@ async function openJobModal(id) {
       }
     });
 
-  } catch { showToast('Could not load job details. Please try again.', 'error'); }
+  } catch (err) { console.error('MODAL ERROR:', err); showToast('Could not load job details. Please try again.', 'error'); }
 }
 
 // ── Accommodation detail modal ────────────────────────────────
