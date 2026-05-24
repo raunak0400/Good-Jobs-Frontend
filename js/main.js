@@ -117,9 +117,13 @@ function renderJobCard(job) {
 // ── Render accommodation card ─────────────────────────────────
 function renderAccCard(acc) {
   const typeClass = acc.type==='PG'?'badge-pg':acc.type==='Hostel'?'badge-hostel':'badge-apartment';
+  const thumbContent = acc.image
+    ? `<img src="${acc.image}" alt="${acc.name}" class="acc-thumb-img"/>`
+    : '';
   return `
   <div class="acc-card reveal card-glow" data-id="${acc.id}">
     <div class="acc-thumb" style="background:${acc.color}">
+      ${thumbContent}
       <span class="acc-type-badge ${typeClass}">${acc.type}</span>
       <span class="gender-badge">${acc.gender}</span>
     </div>
@@ -171,7 +175,7 @@ function closeModal() {
 }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-// ── Job detail modal (3-step apply flow) ─────────────────────
+// ── Job detail modal (with separate Apply popup) ─────────────────────
 async function openJobModal(id) {
   try {
     const res = await apiFetch(`/jobs/${id}`);
@@ -179,7 +183,7 @@ async function openJobModal(id) {
     const m = getModalContainer();
     const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
 
-    // ── Step 1: Full company details + big "Apply Now" button ─
+    // ── Job Details Modal (no application form here) ─
     m.innerHTML = `
     <div class="modal-box" id="modalBox">
       <button class="modal-close" onclick="closeModal()">✕</button>
@@ -217,76 +221,106 @@ async function openJobModal(id) {
 
       <hr class="modal-divider"/>
 
-      <!-- Big Apply Now button (Step 1 → Step 2 trigger) -->
+      <!-- Big Apply Now button — opens a SEPARATE popup -->
       <button class="apply-now-hero" id="applyNowHero">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
         Apply Now
       </button>
-
-      <!-- Step 2: Application form + Resume upload (hidden initially) -->
-      <div class="apply-step2" id="applyStep2">
-        <hr class="modal-divider" style="margin-top:24px"/>
-        <div class="modal-section" style="margin-top:0">
-          <strong>Your Details</strong>
-          <form class="modal-form" id="applyForm" style="margin-top:12px">
-            <div class="mform-row">
-              <input class="form-input" type="text"  id="apName"  placeholder="Your full name *" required/>
-              <input class="form-input" type="email" id="apEmail" placeholder="Email address *" required/>
-            </div>
-            <input class="form-input" type="tel" id="apPhone" placeholder="Phone number (optional)" style="margin-top:10px"/>
-            <textarea class="form-textarea" id="apNote" placeholder="Short cover note (optional)" style="margin-top:10px;min-height:70px"></textarea>
-
-            <!-- Resume Upload Zone -->
-            <div class="resume-upload-zone" id="resumeZone">
-              <div class="resume-upload-icon">
-                <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-              </div>
-              <p class="resume-upload-label">Upload Your Resume <span class="resume-required">*</span></p>
-              <p class="resume-upload-hint">PDF or Word · Max 5 MB</p>
-              <input type="file" id="resumeFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none"/>
-              <button type="button" class="resume-browse-btn" id="resumeBrowseBtn">Browse Files</button>
-              <div class="resume-file-info" id="resumeFileInfo" style="display:none">
-                <span class="resume-file-icon">📄</span>
-                <span class="resume-file-name" id="resumeFileName"></span>
-                <button type="button" class="resume-file-remove" id="resumeFileRemove">✕</button>
-              </div>
-            </div>
-
-            <button type="submit" class="form-submit apply-submit-btn" id="applyBtn" style="margin-top:16px" disabled>
-              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>
-              Submit Application
-            </button>
-          </form>
-        </div>
-      </div>
     </div>`;
 
     requestAnimationFrame(() => m.classList.add('modal-open'));
 
-    // ── Step 1 → Step 2: Show apply form when "Apply Now" is clicked ─
-    const heroBtn   = document.getElementById('applyNowHero');
-    const step2     = document.getElementById('applyStep2');
-    const submitBtn = document.getElementById('applyBtn');
-
-    heroBtn.addEventListener('click', () => {
-      heroBtn.classList.add('applied-click');
-      setTimeout(() => {
-        step2.classList.add('step2-visible');
-        step2.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 200);
+    // ── "Apply Now" opens a brand new popup modal ─
+    document.getElementById('applyNowHero').addEventListener('click', () => {
+      openApplyPopup(job);
     });
 
-    // ── Resume file input wiring ───────────────────────────────
+  } catch (err) { console.error('MODAL ERROR:', err); showToast('Could not load job details. Please try again.', 'error'); }
+}
+
+// ── Separate Apply Popup Modal ───────────────────────────────
+function openApplyPopup(job) {
+  // Close the job detail modal first
+  closeModal();
+
+  // Small delay to allow close animation, then open new popup
+  setTimeout(() => {
+    const m = getModalContainer();
+    m.innerHTML = `
+    <div class="modal-box apply-popup-modal" id="applyPopupBox">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+
+      <!-- Apply Popup Header -->
+      <div class="apply-popup-header">
+        <div class="apply-popup-icon">
+          <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
+        </div>
+        <div>
+          <div class="modal-title" style="font-size:1.2rem">Apply for ${job.title}</div>
+          <div class="modal-subtitle">${job.company} · ${job.area}</div>
+        </div>
+      </div>
+
+      <hr class="modal-divider" style="margin:16px 0"/>
+
+      <!-- Application Form -->
+      <form class="modal-form" id="applyForm">
+        <div class="mform-row">
+          <div class="apply-field-group">
+            <label class="apply-field-label" for="apName">Full Name *</label>
+            <input class="form-input" type="text" id="apName" placeholder="Enter your full name" required/>
+          </div>
+          <div class="apply-field-group">
+            <label class="apply-field-label" for="apEmail">Email Address *</label>
+            <input class="form-input" type="email" id="apEmail" placeholder="your.email@example.com" required/>
+          </div>
+        </div>
+        <div class="apply-field-group" style="margin-top:12px">
+          <label class="apply-field-label" for="apPhone">Phone Number</label>
+          <input class="form-input" type="tel" id="apPhone" placeholder="+91 XXXXX XXXXX (optional)"/>
+        </div>
+        <div class="apply-field-group" style="margin-top:12px">
+          <label class="apply-field-label" for="apNote">Cover Note</label>
+          <textarea class="form-textarea" id="apNote" placeholder="Tell us briefly why you're a great fit… (optional)" style="min-height:70px"></textarea>
+        </div>
+
+        <!-- Resume Upload Zone -->
+        <div class="resume-upload-zone" id="resumeZone">
+          <div class="resume-upload-icon">
+            <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <p class="resume-upload-label">Upload Your Resume <span class="resume-required">*</span></p>
+          <p class="resume-upload-hint">PDF or Word · Max 5 MB</p>
+          <input type="file" id="resumeFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" style="display:none"/>
+          <button type="button" class="resume-browse-btn" id="resumeBrowseBtn">Browse Files</button>
+          <div class="resume-file-info" id="resumeFileInfo" style="display:none">
+            <span class="resume-file-icon">📄</span>
+            <span class="resume-file-name" id="resumeFileName"></span>
+            <button type="button" class="resume-file-remove" id="resumeFileRemove">✕</button>
+          </div>
+        </div>
+
+        <button type="submit" class="form-submit apply-submit-btn" id="applyBtn" style="margin-top:16px" disabled>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin-right:6px"><polyline points="20 6 9 17 4 12"/></svg>
+          Submit Application
+        </button>
+      </form>
+    </div>`;
+
+    requestAnimationFrame(() => m.classList.add('modal-open'));
+
+    // ── Wire up resume upload ───────────────────────────────
     const fileInput      = document.getElementById('resumeFile');
     const browseBtn      = document.getElementById('resumeBrowseBtn');
     const fileInfo       = document.getElementById('resumeFileInfo');
     const fileNameEl     = document.getElementById('resumeFileName');
     const fileRemoveBtn  = document.getElementById('resumeFileRemove');
     const resumeZone     = document.getElementById('resumeZone');
+    const submitBtn      = document.getElementById('applyBtn');
 
     browseBtn.addEventListener('click', () => fileInput.click());
 
@@ -328,7 +362,7 @@ async function openJobModal(id) {
       submitBtn.disabled = false;
     }
 
-    // ── Form submit: read file as base64, send to backend which emails it as attachment ─
+    // ── Form submit ─────────────────────────────────────────
     document.getElementById('applyForm').addEventListener('submit', async e => {
       e.preventDefault();
       const file = fileInput.files[0];
@@ -338,7 +372,6 @@ async function openJobModal(id) {
       submitBtn.disabled = true;
 
       try {
-        // Read file as base64 (strip the data URL prefix)
         const base64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.onload  = () => resolve(reader.result.split(',')[1]);
@@ -368,8 +401,7 @@ async function openJobModal(id) {
         submitBtn.disabled = false;
       }
     });
-
-  } catch (err) { console.error('MODAL ERROR:', err); showToast('Could not load job details. Please try again.', 'error'); }
+  }, 350);
 }
 
 // ── Accommodation detail modal ────────────────────────────────
