@@ -92,7 +92,7 @@ const SVG_STAR = `<svg width="13" height="13" fill="currentColor" viewBox="0 0 2
 function renderJobCard(job) {
   const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
   return `
-  <div class="job-card reveal card-glow" data-id="${job.id}">
+  <div class="job-card reveal card-glow" data-id="${job.id}" onclick="openApplyPopupById(${job.id})" style="cursor:pointer">
     <div class="job-card-header">
       <div class="company-logo" style="background:${job.logoColor}">${job.logo}</div>
       <div class="job-info">
@@ -109,9 +109,20 @@ function renderJobCard(job) {
     <div class="job-footer">
       <span class="salary">${job.salaryDisplay}</span>
       <span class="job-type-badge ${typeClass}">${job.type}</span>
-      <button class="btn btn-primary btn-sm" onclick="openJobModal(${job.id})">Apply Now</button>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openApplyPopupById(${job.id})">Apply Now</button>
     </div>
   </div>`;
+}
+
+// ── Open Apply Popup by job ID (fetches job data first) ───────
+async function openApplyPopupById(id) {
+  try {
+    const res = await apiFetch(`/jobs/${id}`);
+    openApplyPopup(res.data);
+  } catch (err) {
+    console.error('APPLY POPUP ERROR:', err);
+    showToast('Could not load job details. Please try again.', 'error');
+  }
 }
 
 // ── Render accommodation card ─────────────────────────────────
