@@ -14,7 +14,7 @@ if (navbar) window.addEventListener('scroll', () => navbar.classList.toggle('scr
 
 // ── Mobile hamburger ─────────────────────────────────────────
 const hamburger = document.getElementById('hamburger');
-const navLinks  = document.getElementById('navLinks');
+const navLinks = document.getElementById('navLinks');
 if (hamburger && navLinks) {
   hamburger.addEventListener('click', () => {
     hamburger.classList.toggle('open');
@@ -82,9 +82,9 @@ async function apiFetch(endpoint, options = {}) {
 }
 
 // ── SVG icons ─────────────────────────────────────────────────
-const SVG_PIN  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
-const SVG_BAG  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`;
-const SVG_CLK  = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
+const SVG_PIN = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>`;
+const SVG_BAG = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`;
+const SVG_CLK = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`;
 const SVG_WALK = `<svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="4" r="2"/><path d="M15 8H9l-2 6h3l-1 8h4l-1-8h3z"/></svg>`;
 const SVG_STAR = `<svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>`;
 
@@ -92,7 +92,7 @@ const SVG_STAR = `<svg width="13" height="13" fill="currentColor" viewBox="0 0 2
 function renderJobCard(job) {
   const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
   return `
-  <div class="job-card reveal card-glow" data-id="${job.id}" onclick="openApplyPopupById(${job.id})" style="cursor:pointer">
+  <div class="job-card reveal card-glow" data-id="${job.id}" onclick="openJobModal(${job.id})" style="cursor:pointer">
     <div class="job-card-header">
       <div class="company-logo" style="background:${job.logoColor}">${job.logo}</div>
       <div class="job-info">
@@ -105,29 +105,18 @@ function renderJobCard(job) {
       <span class="meta-tag">${SVG_BAG} ${job.industry}</span>
       <span class="meta-tag">${SVG_CLK} ${job.posted}</span>
     </div>
-    <div class="job-skills">${job.skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>
+    <div class="job-skills">${job.skills.map(s => `<span class="skill-badge">${s}</span>`).join('')}</div>
     <div class="job-footer">
       <span class="salary">${job.salaryDisplay}</span>
       <span class="job-type-badge ${typeClass}">${job.type}</span>
-      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openApplyPopupById(${job.id})">Apply Now</button>
+      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openJobModal(${job.id})">Apply Now</button>
     </div>
   </div>`;
 }
 
-// ── Open Apply Popup by job ID (fetches job data first) ───────
-async function openApplyPopupById(id) {
-  try {
-    const res = await apiFetch(`/jobs/${id}`);
-    openApplyPopup(res.data);
-  } catch (err) {
-    console.error('APPLY POPUP ERROR:', err);
-    showToast('Could not load job details. Please try again.', 'error');
-  }
-}
-
 // ── Render accommodation card ─────────────────────────────────
 function renderAccCard(acc) {
-  const typeClass = acc.type==='PG'?'badge-pg':acc.type==='Hostel'?'badge-hostel':'badge-apartment';
+  const typeClass = acc.type === 'PG' ? 'badge-pg' : acc.type === 'Hostel' ? 'badge-hostel' : 'badge-apartment';
   const thumbContent = acc.image
     ? `<img src="${acc.image}" alt="${acc.name}" class="acc-thumb-img"/>`
     : '';
@@ -142,7 +131,7 @@ function renderAccCard(acc) {
       <div class="acc-name">${acc.name}</div>
       <div class="acc-area">${SVG_PIN} ${acc.area}, ${acc.city}</div>
       <div class="acc-area" style="margin-top:-10px">${SVG_WALK} ${acc.distance}</div>
-      <div class="acc-amenities">${acc.amenities.map(a=>`<span class="amenity">${a}</span>`).join('')}</div>
+      <div class="acc-amenities">${acc.amenities.map(a => `<span class="amenity">${a}</span>`).join('')}</div>
       <div class="acc-footer">
         <div class="acc-price">₹${acc.price.toLocaleString()}<span>/month</span></div>
         <div class="acc-rating">${SVG_STAR}${acc.rating}</div>
@@ -154,7 +143,7 @@ function renderAccCard(acc) {
 
 // ── In-memory cache ───────────────────────────────────────────
 let _jobsCache = null;
-let _accCache  = null;
+let _accCache = null;
 
 async function getJobs(params = {}) {
   const qs = new URLSearchParams(params).toString();
@@ -214,19 +203,19 @@ async function openJobModal(id) {
       </div>
 
       <!-- Salary -->
-      <div class="modal-salary">💰 ${job.salaryDisplay} &nbsp;·&nbsp; ${job.openings} opening${job.openings>1?'s':''}</div>
+      <div class="modal-salary">💰 ${job.salaryDisplay} &nbsp;·&nbsp; ${job.openings} opening${job.openings > 1 ? 's' : ''}</div>
 
       <!-- Full Company Details -->
       <div class="modal-company-details">
         <div class="modal-section"><strong>About the Role</strong><p>${job.desc}</p></div>
         <div class="modal-section"><strong>Skills Required</strong>
-          <div class="job-skills" style="margin-top:8px">${job.skills.map(s=>`<span class="skill-badge">${s}</span>`).join('')}</div>
+          <div class="job-skills" style="margin-top:8px">${job.skills.map(s => `<span class="skill-badge">${s}</span>`).join('')}</div>
         </div>
         <div class="modal-section"><strong>Requirements</strong>
-          <ul class="modal-list">${(job.requirements||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
+          <ul class="modal-list">${(job.requirements || []).map(r => `<li>${r}</li>`).join('')}</ul>
         </div>
         <div class="modal-section"><strong>Benefits</strong>
-          <ul class="modal-list">${(job.benefits||[]).map(b=>`<li>${b}</li>`).join('')}</ul>
+          <ul class="modal-list">${(job.benefits || []).map(b => `<li>${b}</li>`).join('')}</ul>
         </div>
       </div>
 
@@ -325,13 +314,13 @@ function openApplyPopup(job) {
     requestAnimationFrame(() => m.classList.add('modal-open'));
 
     // ── Wire up resume upload ───────────────────────────────
-    const fileInput      = document.getElementById('resumeFile');
-    const browseBtn      = document.getElementById('resumeBrowseBtn');
-    const fileInfo       = document.getElementById('resumeFileInfo');
-    const fileNameEl     = document.getElementById('resumeFileName');
-    const fileRemoveBtn  = document.getElementById('resumeFileRemove');
-    const resumeZone     = document.getElementById('resumeZone');
-    const submitBtn      = document.getElementById('applyBtn');
+    const fileInput = document.getElementById('resumeFile');
+    const browseBtn = document.getElementById('resumeBrowseBtn');
+    const fileInfo = document.getElementById('resumeFileInfo');
+    const fileNameEl = document.getElementById('resumeFileName');
+    const fileRemoveBtn = document.getElementById('resumeFileRemove');
+    const resumeZone = document.getElementById('resumeZone');
+    const submitBtn = document.getElementById('applyBtn');
 
     browseBtn.addEventListener('click', () => fileInput.click());
 
@@ -366,7 +355,7 @@ function openApplyPopup(job) {
       if (file.size > 5 * 1024 * 1024) {
         showToast('File size must be under 5 MB.', 'error'); return;
       }
-      fileNameEl.textContent = `${file.name} (${(file.size/1024).toFixed(0)} KB)`;
+      fileNameEl.textContent = `${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
       fileInfo.style.display = 'flex';
       browseBtn.style.display = 'none';
       resumeZone.classList.add('has-file');
@@ -385,7 +374,7 @@ function openApplyPopup(job) {
       try {
         const base64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload  = () => resolve(reader.result.split(',')[1]);
+          reader.onload = () => resolve(reader.result.split(',')[1]);
           reader.onerror = reject;
           reader.readAsDataURL(file);
         });
@@ -393,14 +382,14 @@ function openApplyPopup(job) {
         const result = await apiFetch('/contact/resume', {
           method: 'POST',
           body: JSON.stringify({
-            applicantName:  document.getElementById('apName').value,
+            applicantName: document.getElementById('apName').value,
             applicantEmail: document.getElementById('apEmail').value,
             applicantPhone: document.getElementById('apPhone').value || '',
-            coverNote:      document.getElementById('apNote').value  || '',
-            jobId:    job.id,
+            coverNote: document.getElementById('apNote').value || '',
+            jobId: job.id,
             jobTitle: job.title,
             fileName: file.name,
-            fileSize: `${(file.size/1024).toFixed(0)} KB`,
+            fileSize: `${(file.size / 1024).toFixed(0)} KB`,
             fileBase64: base64,
           }),
         });
@@ -421,7 +410,7 @@ async function openAccModal(id) {
     const res = await apiFetch(`/accommodation/${id}`);
     const acc = res.data;
     const m = getModalContainer();
-    const typeClass = acc.type==='PG'?'badge-pg':acc.type==='Hostel'?'badge-hostel':'badge-apartment';
+    const typeClass = acc.type === 'PG' ? 'badge-pg' : acc.type === 'Hostel' ? 'badge-hostel' : 'badge-apartment';
     m.innerHTML = `
     <div class="modal-box">
       <button class="modal-close" onclick="closeModal()">✕</button>
@@ -438,12 +427,12 @@ async function openAccModal(id) {
         </div>
         <div class="modal-price-box">₹${acc.price.toLocaleString()}<span>/mo</span></div>
       </div>
-      <div class="modal-section"><strong>About this Property</strong><p>${acc.desc||'A verified accommodation listing on Good Jobs.'}</p></div>
+      <div class="modal-section"><strong>About this Property</strong><p>${acc.desc || 'A verified accommodation listing on Good Jobs.'}</p></div>
       <div class="modal-section"><strong>Amenities</strong>
-        <div class="acc-amenities" style="margin-top:8px">${acc.amenities.map(a=>`<span class="amenity">${a}</span>`).join('')}</div>
+        <div class="acc-amenities" style="margin-top:8px">${acc.amenities.map(a => `<span class="amenity">${a}</span>`).join('')}</div>
       </div>
       <div class="modal-section"><strong>Contact Owner</strong>
-        <p style="color:var(--text-muted);font-size:.9rem">${acc.ownerName||'Verified Owner'} · <a href="tel:${acc.ownerPhone}" style="color:var(--primary-light)">${acc.ownerPhone||'Available on request'}</a></p>
+        <p style="color:var(--text-muted);font-size:.9rem">${acc.ownerName || 'Verified Owner'} · <a href="tel:${acc.ownerPhone}" style="color:var(--primary-light)">${acc.ownerPhone || 'Available on request'}</a></p>
       </div>
       <hr class="modal-divider"/>
       <div class="modal-section"><strong>Send an Enquiry</strong>
@@ -494,22 +483,22 @@ async function initJobsPage() {
   }
 
   function applyFilters() {
-    const city     = document.getElementById('filterCity')?.value     || '';
+    const city = document.getElementById('filterCity')?.value || '';
     const industry = document.getElementById('filterIndustry')?.value || '';
-    const type     = document.getElementById('filterType')?.value     || '';
-    const salary   = document.getElementById('filterSalary')?.value   || '';
-    const search   = document.getElementById('jobSearch')?.value.toLowerCase() || '';
+    const type = document.getElementById('filterType')?.value || '';
+    const salary = document.getElementById('filterSalary')?.value || '';
+    const search = document.getElementById('jobSearch')?.value.toLowerCase() || '';
     render(allJobs.filter(j => {
-      if (city     && j.city !== city)          return false;
-      if (industry && j.industry !== industry)  return false;
-      if (type     && j.type !== type)          return false;
-      if (salary   && j.salaryMin < parseInt(salary)) return false;
-      if (search   && !j.title.toLowerCase().includes(search) && !j.company.toLowerCase().includes(search)) return false;
+      if (city && j.city !== city) return false;
+      if (industry && j.industry !== industry) return false;
+      if (type && j.type !== type) return false;
+      if (salary && j.salaryMin < parseInt(salary)) return false;
+      if (search && !j.title.toLowerCase().includes(search) && !j.company.toLowerCase().includes(search)) return false;
       return true;
     }));
   }
 
-  ['filterCity','filterIndustry','filterType','filterSalary'].forEach(id => document.getElementById(id)?.addEventListener('change', applyFilters));
+  ['filterCity', 'filterIndustry', 'filterType', 'filterSalary'].forEach(id => document.getElementById(id)?.addEventListener('change', applyFilters));
   document.getElementById('jobSearch')?.addEventListener('input', applyFilters);
   document.getElementById('filterBtn')?.addEventListener('click', applyFilters);
   render(allJobs);
@@ -534,22 +523,22 @@ async function initAccPage() {
   }
 
   function applyFilters() {
-    const city   = document.getElementById('accCity')?.value   || '';
-    const type   = document.getElementById('accType')?.value   || '';
+    const city = document.getElementById('accCity')?.value || '';
+    const type = document.getElementById('accType')?.value || '';
     const gender = document.getElementById('accGender')?.value || '';
-    const price  = document.getElementById('accPrice')?.value  || '';
+    const price = document.getElementById('accPrice')?.value || '';
     const search = document.getElementById('accSearch')?.value.toLowerCase() || '';
     render(allAcc.filter(a => {
-      if (city   && a.city !== city)   return false;
-      if (type   && a.type !== type)   return false;
+      if (city && a.city !== city) return false;
+      if (type && a.type !== type) return false;
       if (gender && a.gender !== gender && a.gender !== 'Any') return false;
-      if (price  && a.price > parseInt(price))  return false;
+      if (price && a.price > parseInt(price)) return false;
       if (search && !a.name.toLowerCase().includes(search) && !a.area.toLowerCase().includes(search)) return false;
       return true;
     }));
   }
 
-  ['accCity','accType','accGender','accPrice'].forEach(id => document.getElementById(id)?.addEventListener('change', applyFilters));
+  ['accCity', 'accType', 'accGender', 'accPrice'].forEach(id => document.getElementById(id)?.addEventListener('change', applyFilters));
   document.getElementById('accSearch')?.addEventListener('input', applyFilters);
   document.getElementById('accFilterBtn')?.addEventListener('click', applyFilters);
   render(allAcc);
@@ -558,7 +547,7 @@ async function initAccPage() {
 // ── Home page ─────────────────────────────────────────────────
 async function initHomePage() {
   const featJobs = document.getElementById('featuredJobs');
-  const featAcc  = document.getElementById('featuredAcc');
+  const featAcc = document.getElementById('featuredAcc');
   if (!featJobs && !featAcc) return;
   try {
     if (featJobs) {
@@ -572,7 +561,7 @@ async function initHomePage() {
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   } catch {
     if (featJobs) featJobs.innerHTML = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Could not load listings.</div>`;
-    if (featAcc)  featAcc.innerHTML  = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Could not load listings.</div>`;
+    if (featAcc) featAcc.innerHTML = `<div style="color:var(--text-muted);padding:40px;text-align:center;grid-column:1/-1">Could not load listings.</div>`;
   }
 }
 
@@ -580,8 +569,8 @@ async function initHomePage() {
 const heroSearchBtn = document.getElementById('heroSearchBtn');
 if (heroSearchBtn) {
   heroSearchBtn.addEventListener('click', () => {
-    const q    = document.getElementById('heroSearchInput')?.value || '';
-    const type = document.getElementById('heroSearchType')?.value  || 'jobs';
+    const q = document.getElementById('heroSearchInput')?.value || '';
+    const type = document.getElementById('heroSearchType')?.value || 'jobs';
     window.location.href = type === 'accommodation'
       ? `accommodation.html${q ? '?q=' + encodeURIComponent(q) : ''}`
       : `jobs.html${q ? '?q=' + encodeURIComponent(q) : ''}`;
@@ -630,17 +619,17 @@ async function submitContactForm(formId, endpoint, mapFn) {
   });
 }
 
-submitContactForm('jobForm',     '/contact/job',     d => d);
-submitContactForm('roomForm',    '/contact/room',    d => d);
+submitContactForm('jobForm', '/contact/job', d => d);
+submitContactForm('roomForm', '/contact/room', d => d);
 submitContactForm('generalForm', '/contact/general', d => d);
 
 // ── Newsletter forms → API ────────────────────────────────────
 document.querySelectorAll('.newsletter-form').forEach(form => {
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    const btn   = form.querySelector('button');
+    const btn = form.querySelector('button');
     const email = form.querySelector('input[type="email"]')?.value;
-    const orig  = btn.textContent;
+    const orig = btn.textContent;
     btn.textContent = '…'; btn.disabled = true;
     try {
       const res = await apiFetch('/newsletter', { method: 'POST', body: JSON.stringify({ email }) });
