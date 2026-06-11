@@ -90,6 +90,9 @@ const SVG_STAR = `<svg width="13" height="13" fill="currentColor" viewBox="0 0 2
 
 // ── Render job card ───────────────────────────────────────────
 function renderJobCard(job) {
+  if (job.title === 'Medical Records Specialist' && job.company === 'JV Healthcare Solutions') {
+    job.salaryDisplay = '₹20,000–₹30,000/mo';
+  }
   const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
   return `
   <div class="job-card reveal card-glow" data-id="${job.id}" onclick="openJobModal(${job.id})" style="cursor:pointer">
@@ -180,6 +183,9 @@ async function openJobModal(id) {
   try {
     const res = await apiFetch(`/jobs/${id}`);
     const job = res.data;
+    if (job.title === 'Medical Records Specialist' && job.company === 'JV Healthcare Solutions') {
+      job.salaryDisplay = '₹20,000–₹30,000/mo';
+    }
     const m = getModalContainer();
     const typeClass = job.type === 'Full-time' ? 'badge-fulltime' : job.type === 'Part-time' ? 'badge-parttime' : 'badge-contract';
 

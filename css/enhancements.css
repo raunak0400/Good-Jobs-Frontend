@@ -1,0 +1,425 @@
+/* ═══════════════════════════════════════════════════════════
+   Good Jobs — Enhancements CSS
+   Features: page transition, hero word reveal, 3D tilt,
+   skeleton, salary slider, FAQ, back-to-top, form success,
+   WhatsApp button
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── PAGE TRANSITION OVERLAY ─────────────────────────────── */
+#pageTransitionOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: var(--bg);
+  pointer-events: none;
+  opacity: 0;                        /* INVISIBLE by default — page shows normally */
+  transition: opacity .42s cubic-bezier(.4,0,.2,1);
+}
+/* Only activate overlay when navigating AWAY */
+#pageTransitionOverlay.pt-out {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ── HERO WORD REVEAL — pure CSS, no JS class needed ────── */
+.hero-word {
+  display: inline-block;
+  animation: wordIn .6s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: calc(var(--wi, 0) * 55ms + 80ms);
+}
+@keyframes wordIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* Gradient-text words inherit parent clip */
+.gradient-text .hero-word {
+  background: inherit;
+  -webkit-background-clip: inherit;
+  background-clip: inherit;
+  -webkit-text-fill-color: inherit;
+}
+
+/* ── 3D TILT — already handled via inline JS transform ────── */
+.job-card,
+.acc-card,
+.step-card,
+.testimonial-card,
+.contact-info-card {
+  will-change: transform;
+  transform-style: preserve-3d;
+}
+
+/* ── SKELETON SCREENS ────────────────────────────────────── */
+.skeleton-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.skel {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,.04) 25%,
+    rgba(255,255,255,.08) 50%,
+    rgba(255,255,255,.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: skelShimmer 1.6s ease-in-out infinite;
+  border-radius: 6px;
+}
+@keyframes skelShimmer {
+  0%   { background-position:  200% center }
+  100% { background-position: -200% center }
+}
+.skel-line  { height: 12px; margin-bottom: 10px; border-radius: 4px; }
+.skel-circle { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; }
+.skel-tag   { height: 24px; width: 88px; border-radius: 99px; }
+.skel-btn   { height: 34px; width: 90px; border-radius: 6px; }
+.skel-row   { display: flex; gap: 14px; align-items: center; margin-bottom: 6px; }
+.skel-tags  { display: flex; gap: 8px; margin: 12px 0; }
+.skel-footer{ display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+
+/* ── SALARY RANGE SLIDER ─────────────────────────────────── */
+#salarySliderWrap {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+}
+.salary-slider-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.salary-slider-title { font-size: .82rem; color: var(--text-muted); font-weight: 500; }
+.salary-slider-value {
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--p);
+}
+.salary-track-wrap { padding: 4px 0; }
+.salary-track {
+  position: relative;
+  height: 4px;
+  background: var(--surface-3);
+  border-radius: 99px;
+}
+.salary-fill {
+  position: absolute;
+  top: 0; height: 4px;
+  background: var(--p);
+  border-radius: 99px;
+  box-shadow: 0 0 10px var(--p-glow);
+  transition: left .1s, width .1s;
+}
+.salary-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 100%;
+  height: 4px;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+  outline: none;
+  border: none;
+}
+.salary-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--p);
+  box-shadow: 0 0 0 3px rgba(0,201,167,.25), 0 0 12px var(--p-glow);
+  cursor: pointer;
+  pointer-events: all;
+  transition: transform .2s, box-shadow .2s;
+}
+.salary-thumb::-webkit-slider-thumb:hover {
+  transform: scale(1.18);
+  box-shadow: 0 0 0 5px rgba(0,201,167,.20), 0 0 20px var(--p-glow-lg);
+}
+.salary-thumb::-moz-range-thumb {
+  width: 18px; height: 18px; border: none;
+  border-radius: 50%;
+  background: var(--p);
+  box-shadow: 0 0 12px var(--p-glow);
+  cursor: pointer;
+  pointer-events: all;
+}
+
+/* ── FAQ ACCORDION ───────────────────────────────────────── */
+.faq-list { display: flex; flex-direction: column; gap: 10px; }
+.faq-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: border-color .3s;
+}
+.faq-item.faq-open { border-color: rgba(0,201,167,.28); }
+.faq-question {
+  width: 100%; display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  background: none; border: none; cursor: pointer;
+  font-family: var(--font-head);
+  font-size: 1rem; font-weight: 600;
+  color: var(--text); text-align: left;
+  transition: color .25s;
+  gap: 16px;
+}
+.faq-item.faq-open .faq-question { color: var(--p); }
+.faq-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  transition: transform .4s cubic-bezier(.34,1.56,.64,1),
+              background .25s, border-color .25s, color .25s;
+}
+.faq-icon svg { width: 13px; height: 13px; }
+.faq-item.faq-open .faq-icon {
+  transform: rotate(45deg);
+  background: rgba(0,201,167,.12);
+  border-color: rgba(0,201,167,.35);
+  color: var(--p);
+}
+.faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .45s cubic-bezier(.4,0,.2,1);
+}
+.faq-answer-inner {
+  padding: 0 24px 22px;
+  color: var(--text-muted);
+  font-size: .92rem;
+  line-height: 1.8;
+}
+
+/* ── BACK TO TOP BUTTON ──────────────────────────────────── */
+#backToTop {
+  position: fixed;
+  bottom: 100px;
+  right: 28px;
+  z-index: 500;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  border: 1px solid rgba(0,201,167,.28);
+  color: var(--p);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(16px) scale(.85);
+  transition: opacity .35s, transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .3s;
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+}
+#backToTop.btt-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#backToTop:hover {
+  background: var(--p);
+  color: #040912;
+  box-shadow: 0 4px 24px var(--p-glow-lg);
+  transform: translateY(-3px) scale(1.08);
+}
+#backToTop svg { width: 18px; height: 18px; }
+
+/* Ping ring on appearance */
+#backToTop.btt-visible::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--p);
+  animation: bttPing .6s ease-out forwards;
+}
+@keyframes bttPing {
+  from { transform: scale(1); opacity: .6; }
+  to   { transform: scale(1.7); opacity: 0; }
+}
+
+/* ── FLOATING WHATSAPP BUTTON ────────────────────────────── */
+#whatsappFloat {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 500;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: #25D366;
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 24px rgba(37,211,102,.40), 0 2px 8px rgba(0,0,0,.3);
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s;
+  text-decoration: none;
+}
+#whatsappFloat:hover {
+  transform: scale(1.12) translateY(-3px);
+  box-shadow: 0 10px 36px rgba(37,211,102,.55), 0 4px 12px rgba(0,0,0,.35);
+}
+#whatsappFloat svg { width: 26px; height: 26px; }
+
+/* Pulse ring */
+#whatsappFloat::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  background: rgba(37,211,102,.45);
+  animation: waPulse 2.5s ease-out infinite;
+}
+@keyframes waPulse {
+  0%   { transform: scale(1); opacity: .6; }
+  70%  { transform: scale(1.8); opacity: 0; }
+  100% { opacity: 0; }
+}
+#whatsappFloat svg { position: relative; z-index: 1; }
+
+/* WhatsApp tooltip */
+#whatsappFloat::after {
+  content: 'Chat on WhatsApp';
+  position: absolute;
+  right: 60px;
+  white-space: nowrap;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  color: var(--text);
+  font-size: .78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(8px);
+  transition: opacity .25s, transform .25s;
+  font-family: var(--font-body);
+  box-shadow: var(--shadow);
+}
+#whatsappFloat:hover::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ── ANIMATED FORM SUCCESS ───────────────────────────────── */
+.form-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  gap: 16px;
+  animation: fsIn .5s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes fsIn {
+  from { opacity: 0; transform: scale(.9) translateY(16px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.fs-ring {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(0,201,167,.10);
+  border: 2px solid var(--p);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 8px;
+  box-shadow: 0 0 0 12px rgba(0,201,167,.06), 0 0 40px var(--p-glow);
+  animation: fsRingIn .6s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+@keyframes fsRingIn {
+  from { transform: scale(0) rotate(-90deg); }
+  to   { transform: scale(1) rotate(0deg); }
+}
+.fs-check { width: 44px; height: 44px; color: var(--p); overflow: visible; }
+.fs-circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: fsDraw .6s .2s cubic-bezier(.65,0,.45,1) forwards;
+}
+.fs-tick {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: fsDraw .4s .7s cubic-bezier(.65,0,.45,1) forwards;
+}
+@keyframes fsDraw {
+  to { stroke-dashoffset: 0; }
+}
+.fs-title {
+  font-family: var(--font-head);
+  font-size: 1.5rem; font-weight: 800;
+  letter-spacing: -.025em;
+}
+.fs-msg { font-size: .9rem; color: var(--text-muted); max-width: 320px; line-height: 1.7; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────── */
+@media(max-width:768px){
+  #whatsappFloat { width: 46px; height: 46px; bottom: 20px; right: 20px; }
+  #backToTop     { bottom: 84px; right: 20px; width: 40px; height: 40px; }
+  #whatsappFloat::after { display: none; }
+}
+
+/* ── FLUID AURORA BACKGROUND ─────────────────────────────── */
+.aurora-wrapper {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background-color: var(--bg); /* #040912 */
+  pointer-events: none;
+}
+
+.aurora-blob {
+  position: absolute;
+  filter: blur(120px);
+  border-radius: 50%;
+  animation: auroraFloat 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+}
+
+.aurora-1 {
+  top: -10vh; left: -10vw; width: 60vw; height: 60vh;
+  background: rgba(0, 201, 167, 0.15);
+  animation-duration: 25s;
+}
+
+.aurora-2 {
+  top: 20vh; right: -15vw; width: 70vw; height: 70vh;
+  background: rgba(13, 148, 136, 0.12);
+  animation-duration: 30s;
+  animation-delay: -5s;
+}
+
+.aurora-3 {
+  bottom: -20vh; left: 10vw; width: 60vw; height: 60vh;
+  background: rgba(15, 118, 110, 0.15);
+  animation-duration: 28s;
+  animation-delay: -10s;
+}
+
+.aurora-4 {
+  top: 30vh; left: 30vw; width: 50vw; height: 50vh;
+  background: rgba(245, 158, 11, 0.04);
+  animation-duration: 35s;
+  animation-delay: -15s;
+}
+
+@keyframes auroraFloat {
+  0%   { transform: translate(0, 0) scale(1) rotate(0deg); }
+  33%  { transform: translate(15vw, 15vh) scale(1.2) rotate(45deg); }
+  66%  { transform: translate(-10vw, 20vh) scale(0.9) rotate(90deg); }
+  100% { transform: translate(10vw, -15vh) scale(1.1) rotate(135deg); }
+}
+
+.aurora-noise {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
